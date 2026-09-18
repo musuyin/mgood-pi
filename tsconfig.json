@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "paths": {
+      "@mgood-pi/core": ["packages/core/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "plugins/*/src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["**/build/**", "**/dist/**", "**/node_modules/**"]
+}
