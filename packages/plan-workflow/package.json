@@ -1,0 +1,33 @@
+{
+  "name": "@mgood-pi/plan-workflow-core",
+  "version": "0.2.0",
+  "description": "Framework-neutral discovery and parsing for mgood-pi Plan Workflow.",
+  "type": "module",
+  "license": "MIT",
+  "repository": "https://github.com/musuyin/mgood-pi.git",
+  "homepage": "https://github.com/musuyin/mgood-pi#readme",
+  "bugs": "https://github.com/musuyin/mgood-pi/issues",
+  "files": [
+    "src",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}
