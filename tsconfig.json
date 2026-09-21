@@ -4,7 +4,8 @@
     "baseUrl": ".",
     "noEmit": true,
     "paths": {
-      "@mgood-pi/core": ["packages/core/src/index.ts"]
+      "@mgood-pi/core": ["packages/core/src/index.ts"],
+      "@mgood-pi/plan-workflow-core": ["packages/plan-workflow/src/index.ts"]
     }
   },
   "include": ["packages/*/src/**/*.ts", "plugins/*/src/**/*.ts", "scripts/**/*.ts"],

@@ -2,10 +2,19 @@
   "name": "@mgood-pi/core",
   "version": "0.1.0",
   "description": "Framework-neutral contracts shared by mgood-pi plugins.",
+  "license": "MIT",
+  "repository": "https://github.com/musuyin/mgood-pi.git",
+  "homepage": "https://github.com/musuyin/mgood-pi#readme",
+  "bugs": "https://github.com/musuyin/mgood-pi/issues",
   "type": "module",
   "files": [
-    "src"
+    "src",
+    "README.md",
+    "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": "./src/index.ts"
   },

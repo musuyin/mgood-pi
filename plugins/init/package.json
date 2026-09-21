@@ -2,10 +2,25 @@
   "name": "@mgood-pi/plugin-init",
   "version": "0.1.0",
   "description": "Pi extension providing the /mgood:init project bootstrap command.",
+  "license": "MIT",
+  "repository": "https://github.com/musuyin/mgood-pi.git",
+  "homepage": "https://github.com/musuyin/mgood-pi#readme",
+  "bugs": "https://github.com/musuyin/mgood-pi/issues",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "plugin",
+    "bootstrap"
+  ],
   "type": "module",
   "files": [
-    "src"
+    "src",
+    "README.md",
+    "CHANGELOG.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "pi": {
     "extensions": [
       "src/index.ts"
@@ -20,7 +35,7 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.84.2",
-    "@mgood-pi/core": "0.1.0"
+    "@mgood-pi/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
