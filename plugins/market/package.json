@@ -1,7 +1,7 @@
 {
-  "name": "@mgood-pi/plugin-init",
+  "name": "@mgood-pi/plugin-market",
   "version": "0.1.0",
-  "description": "Pi extension providing the /mgood:init project bootstrap command.",
+  "description": "Pi extension providing the /mgood:market curated plugin installer and /mgood:init bootstrap preview.",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",
   "homepage": "https://github.com/musuyin/mgood-pi#readme",
@@ -10,6 +10,7 @@
     "pi-package",
     "pi",
     "plugin",
+    "marketplace",
     "bootstrap"
   ],
   "type": "module",

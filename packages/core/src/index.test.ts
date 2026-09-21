@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   INIT_COMMAND,
   INITIAL_PROJECT_FILES,
+  MARKET_COMMAND,
   PLUGIN_CATALOG,
   createInitSummary,
   createInstallCommand,
@@ -10,8 +11,9 @@ import {
 } from "./index.js";
 
 describe("core contracts", () => {
-  it("defines the namespaced bootstrap command", () => {
+  it("defines the namespaced bootstrap and marketplace commands", () => {
     expect(INIT_COMMAND).toBe("mgood:init");
+    expect(MARKET_COMMAND).toBe("mgood:market");
   });
 
   it("describes the Pi-native project files", () => {

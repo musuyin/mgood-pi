@@ -2,20 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PLUGIN_CATALOG } from "@mgood-pi/core";
 
-import registerInitPlugin, { installCatalogPlugin } from "./index.js";
+import registerMarketPlugin, { installCatalogPlugin } from "./index.js";
 
-describe("init plugin", () => {
+describe("market plugin", () => {
   it("registers namespaced bootstrap and marketplace commands", () => {
     const registerCommand = vi.fn();
 
-    registerInitPlugin({ registerCommand } as never);
+    registerMarketPlugin({ registerCommand } as never);
 
     expect(registerCommand).toHaveBeenCalledWith(
       "mgood:init",
       expect.objectContaining({ description: expect.any(String), handler: expect.any(Function) }),
     );
     expect(registerCommand).toHaveBeenCalledWith(
-      "mgood:plugins",
+      "mgood:market",
       expect.objectContaining({ description: expect.any(String), handler: expect.any(Function) }),
     );
   });

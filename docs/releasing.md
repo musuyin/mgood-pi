@@ -4,12 +4,12 @@
 
 ## Publishable packages
 
-| Package                          | Role                                  | User installation                                    |
-| -------------------------------- | ------------------------------------- | ---------------------------------------------------- |
-| `@mgood-pi/core`                 | Shared contracts for plugins          | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-init`          | Bootstrap preview command             | `pi install npm:@mgood-pi/plugin-init`               |
-| `@mgood-pi/plan-workflow-core`   | Plan discovery/parsing implementation | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-plan-workflow` | `/make-plan`, `/do-plan`, and prompts | `pi install npm:@mgood-pi/plugin-plan-workflow`      |
+| Package                          | Role                                      | User installation                                    |
+| -------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| `@mgood-pi/core`                 | Shared contracts for plugins              | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-market`        | Curated marketplace and bootstrap preview | `pi install npm:@mgood-pi/plugin-market`             |
+| `@mgood-pi/plan-workflow-core`   | Plan discovery/parsing implementation     | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-plan-workflow` | `/make-plan`, `/do-plan`, and prompts     | `pi install npm:@mgood-pi/plugin-plan-workflow`      |
 
 A package is publishable when its `package.json` is not `private`, includes public npm metadata, and has `publishConfig.access: "public"`.
 
@@ -67,7 +67,7 @@ Before merging a Version Packages PR or publishing manually, run:
 
 ```bash
 npm run check
-npm pack --workspace @mgood-pi/plugin-init --dry-run
+npm pack --workspace @mgood-pi/plugin-market --dry-run
 npm pack --workspace @mgood-pi/plugin-plan-workflow --dry-run
 ```
 

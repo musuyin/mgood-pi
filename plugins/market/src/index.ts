@@ -5,7 +5,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import {
   INIT_COMMAND,
   PLUGIN_CATALOG,
-  PLUGINS_COMMAND,
+  MARKET_COMMAND,
   createInitSummary,
   createInstallCommand,
   createPluginCatalogSummary,
@@ -74,7 +74,7 @@ export async function installCatalogPlugin(
   return `Installation failed for ${plugin.name} (exit code ${result.exitCode})${detail ? `: ${detail}` : "."}`;
 }
 
-export default function registerInitPlugin(pi: ExtensionAPI): void {
+export default function registerMarketPlugin(pi: ExtensionAPI): void {
   pi.registerCommand(INIT_COMMAND, {
     description: "Preview the mgood-pi project bootstrap layout",
     handler: async (_args, ctx) => {
@@ -89,7 +89,7 @@ export default function registerInitPlugin(pi: ExtensionAPI): void {
     },
   });
 
-  pi.registerCommand(PLUGINS_COMMAND, {
+  pi.registerCommand(MARKET_COMMAND, {
     description: "Browse and explicitly install curated mgood-pi plugins",
     handler: async (_args, ctx) => {
       if (!ctx.hasUI) {

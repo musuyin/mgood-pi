@@ -1,7 +1,7 @@
 export const KIT_NAME = "mgood-pi";
 
 export const INIT_COMMAND = "mgood:init";
-export const PLUGINS_COMMAND = "mgood:plugins";
+export const MARKET_COMMAND = "mgood:market";
 
 export type PluginInstallScope = "global" | "project";
 
@@ -43,7 +43,7 @@ export function createPluginCatalogSummary(): string {
     plugins,
     "",
     "Install manually with: pi install <source>",
-    "Use /mgood:plugins in an interactive Pi session for guided installation.",
+    "Use /mgood:market in an interactive Pi session for guided installation.",
   ].join("\n");
 }
 
