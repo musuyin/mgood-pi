@@ -1,14 +1,18 @@
 # @mgood-pi/plugin-plan-workflow
 
-Interactive bilingual Plan Workflow for Pi.
+Interactive bilingual Schema v4 Plan Workflow for Pi.
 
 ## Commands
 
-- `/make-plan [root=<path>] <request>` — bilingual planning prompt with a consolidated ambiguity questionnaire.
-- `/do-plan [plan-directory]` — TUI plan → phase → task selector with status icons.
-- `/execute-plan <plan-directory> <task-id>` — internal/direct execution prompt, useful in non-interactive mode.
+- `/mgood:plan-make` — create a Feature, add a Work Plan, or create remediation from an immutable Review.
+- `/mgood:plan-approve [work-plan-directory]` — display and explicitly approve one draft Plan in TUI.
+- `/mgood:plan-do [work-plan-directory]` — select and execute/resume one Work Plan across ordered phases.
+- `/mgood:plan-review [work-plan-directory]` — independently review completed implementation and write a new immutable Review.
+- `/mgood:plan-list [feature-or-plan-directory]` — list workflow state or read a Plan's canonical `APPROVAL.md` without a model turn.
 
-The plugin never switches models. Use Pi's built-in `/model` before planning or execution.
+All workflow data is stored under the fixed repository root `work-plans/`. Selectors provide discovered choices plus manual-path escape hatches; direct paths must remain inside that root and parse as the expected Schema v4 type. Legacy schemas and custom roots are unsupported.
+
+The plugin never switches models. Use Pi's `/model` before each stage if desired.
 
 ## Install
 
@@ -16,18 +20,13 @@ The plugin never switches models. Use Pi's built-in `/model` before planning or 
 pi install npm:@mgood-pi/plugin-plan-workflow
 ```
 
-For local repository development:
+Local development:
 
 ```bash
 pi install -l ./plugins/plan-workflow
-```
-
-For one development run:
-
-```bash
 pi -e ./plugins/plan-workflow
 ```
 
-The selector discovers schema v2 phase plans and legacy v1 plans under `docs/plans` and `tmp/plans`. `/do-plan` requires an interactive UI; direct `/execute-plan` remains available for print/RPC automation.
+The four mutating commands require TUI and fail closed in print/json/rpc modes. `/mgood:plan-list` is read-only: TUI selectors can open complete Plan details and every mode can print them when passed a Plan directory. `/mgood:plan-approve` performs the only `draft` → `approved` transition; when a draft declares an eligible same-Feature `supersedes` Plan, approval also records that old Plan as `superseded` and moves the Feature current-Plan pointer. The extension reads bundled internal Markdown guidance directly; it does not register those files as Pi prompt commands, so users have only the five public `/mgood:plan-*` interfaces. Model-driven actions are not an OS sandbox. Review does not modify implementation or automatically execute remediation.
 
-See [`docs/features/plan-workflow`](../../docs/features/plan-workflow/README.md) for the complete contract, migration guidance, and safety limits. For independent package release instructions, see the repository [release guide](../../docs/releasing.md).
+See [Plan Workflow documentation](../../docs/features/plan-workflow/README.md) and the repository [release guide](../../docs/releasing.md).

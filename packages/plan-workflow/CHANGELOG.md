@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Adopted breaking Schema v4 with canonical Work Plan `APPROVAL.md` entries; no Work Plan README loader remains.
+- Added optional Schema v4 Plan supersession lineage parsing: `supersedes`, `superseded_by`, `superseded_at`, and `supersede_reason`.
+
+### Changed
+
+- Replaced legacy Schema v1/v2 parsing with the then-breaking Schema v3 Feature → Work Plan → Phase → Review model.
+- Restricted discovery and explicit loading to the canonical `work-plans` root with symlink-escape protection.
+- Added separate Work Plan execution/review state, immutable Review discovery, and Feature-grouped summaries.
+
 ## 0.2.0 — 2026-09-21
 
 ### Changed

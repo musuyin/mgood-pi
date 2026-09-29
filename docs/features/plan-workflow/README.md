@@ -1,98 +1,99 @@
 # Plan Workflow
 
-Plan Workflow is a bilingual hybrid Pi feature: a planning prompt resolves ambiguity and writes structured phase documents, while a TypeScript extension provides a `/model`-like picker for executing one task.
+Plan Workflow is a bilingual Pi-native loop for durable planning, execution, and independent implementation review:
 
-## Status
+```text
+Feature → Work Plan → Execute → Review
+           ↑                    |
+           └── remediation ─────┘
+```
 
-Version 0.2 is implemented in two packages:
+A **Feature** owns the long-lived product goal, cumulative requirements, context, and history. A **Work Plan** is one authorized and independently reviewable iteration. Ordered **Phases** and checklist items are internal execution/resume structure.
 
-- `@mgood-pi/plan-workflow-core` discovers/parses schema v2 and legacy v1 plans.
-- `@mgood-pi/plugin-plan-workflow` bundles `/make-plan`, `/execute-plan`, and the interactive `/do-plan` command.
+## Packages and commands
 
-The feature does not switch models. Users keep explicit cost/capability control through Pi's built-in `/model`.
+- `@mgood-pi/plan-workflow-core` safely discovers and parses Schema v4 Features, Work Plans, Phases, and Reviews.
+- `@mgood-pi/plugin-plan-workflow` registers exactly five user commands:
+  - `/mgood:plan-make` — create a Feature, add a Work Plan, or plan remediation from a Review;
+  - `/mgood:plan-list [feature-or-plan-directory]` — read-only discovery/status browsing and Plan reading without a model turn;
+  - `/mgood:plan-approve [work-plan-directory]` — display a draft Plan and explicitly approve it in TUI;
+  - `/mgood:plan-do` — select and execute/resume one approved Work Plan;
+  - `/mgood:plan-review` — independently review one completed Work Plan and cumulative Feature behavior;
 
-## User workflow
+Bundled `create-work-plan`, `execute-work-plan`, and `review-implementation` Markdown remains internal implementation guidance. It is packaged for the Extension to read, but is not registered as a Pi prompt command. The workflow never changes models. Users remain in control through Pi's `/model`.
+
+## Fixed storage root
+
+All shared workflow state lives under exactly:
+
+```text
+work-plans/
+```
+
+The extension does not scan arbitrary `work-plans` directories and does not support custom roots. This makes discovery, review, linking, and repository ownership deterministic. Selector manual-path escapes and direct command paths must still identify valid Schema v4 objects inside this root and pass canonical-path/symlink containment checks.
+
+The unbranded repository-root directory is intended to be easy to upload, share, and commit. It remains distinct from ignored `.mgood-pi/`, which is reserved for future local memory/index state.
+
+## Typical loop
 
 ```text
 /model
-# Choose a planning model.
-
-/make-plan root=docs/plans Add resumable uploads
-# If important decisions remain, answer one consolidated questionnaire.
-# Run /make-plan again with the answers when needed.
+/mgood:plan-make Add resumable uploads
+# Read the generated Plan approval brief, then approve it.
+/mgood:plan-list work-plans/<feature>/work-plans/001-<slug>
+/mgood:plan-approve work-plans/<feature>/work-plans/001-<slug>
 
 /model
-# Choose an implementation model.
+/mgood:plan-do
+# Select a Work Plan; phases/checklists advance automatically.
 
-/do-plan
-# Select plan -> phase -> task from TUI lists.
+/model
+/mgood:plan-review
+# Select the completed Work Plan; a new immutable Review is written.
+
+/mgood:plan-list
+# Read current Feature, Work Plan, checklist, and Review status without a model turn.
 ```
 
-No full directory name or task ID is required in interactive mode. The picker displays:
+If Review returns `changes-required`:
 
-- `✓ completed / 已完成`
-- `▶ running / 进行中`
-- `! blocked / 已阻塞`
-- `○ not started / 未开始`
+```text
+/mgood:plan-make
+# Choose “Create remediation from a Review”, then select the report.
+/mgood:plan-do
+/mgood:plan-review
+```
 
-Completed and blocked tasks cannot be dispatched. Running tasks can be selected for evidence-aware resume.
+Review never fixes code or automatically creates/executes remediation. The new Work Plan links `source_review` and `addresses` finding IDs; old Reviews remain immutable.
 
-## Language behavior
+## Selection model
 
-`/make-plan` detects whether the request is primarily Chinese or English, writes `language: zh-CN` or `language: en`, and generates all plan prose in that language. `/execute-plan` reads that field and keeps results/history in the same language. Identifiers, paths, code, and commands retain their natural form.
+- `/mgood:plan-make` without arguments presents three actions: new Feature, existing-Feature iteration, or Review remediation.
+- Ordinary `/mgood:plan-make <text>` always means a new Feature request.
+- `/mgood:plan-make feature=<feature-path> <goal>` adds one iteration. In TUI, choosing an existing Feature also offers keeping eligible unfinished Plans or recording one as the new draft's replacement target.
+- `/mgood:plan-make feature=<feature-path> supersede=<old-plan-path> <goal>` is the validated direct equivalent; it records intent only. The old Plan changes only when the new Plan is approved.
+- `/mgood:plan-make review=<review-path>` creates remediation planning context.
+- `/mgood:plan-approve [work-plan-path]`, `/mgood:plan-do [work-plan-path]`, and `/mgood:plan-review [work-plan-path]` select only Work Plans.
+- `/mgood:plan-list [feature-or-plan-directory]` lists all discovered Features by default, limits to one Feature, or reads the selected Plan `APPROVAL.md`; it never selects work for execution.
+- Interactive selectors end with “Enter a path manually…”; direct/manual targets have the same validation.
 
-UI labels use concise English/Chinese pairs so plans in either language remain selectable.
+Users never select a Phase, checklist item, or Review finding for execution. Phase and checklist document order define sequencing; no task/finding DAG exists.
 
-## Planning clarification (“grill” gate)
+## State and truth
 
-Before writing a plan, the planner explores the repository and builds an internal decision tree. It resolves questions from code and conventions first, then asks only load-bearing questions affecting scope, architecture, security, public contracts, compatibility, or acceptance.
+Work Plan execution status and review status are independent. `APPROVAL.md` is the canonical Plan entry and human approval brief. A draft may declare `supersedes`; approving it can transition one eligible same-Feature predecessor (`draft`, `approved`, or `blocked`) to `superseded`, preserve its evidence, and move the Feature current-Plan pointer. Active and completed Plans are never superseded by this workflow. A completed Work Plan normally moves the Feature to `review_pending`, not accepted. Review verdicts are:
 
-Unlike grill-me's default one-question-at-a-time interview, Plan Workflow presents one consolidated questionnaire for better flow. Every question includes concrete choices, an `Other` answer, evidence/provenance, and one repository-specific recommendation. The user may answer per question or accept all recommendations.
+- `pass`
+- `pass-with-notes`
+- `changes-required`
+- `blocked`
 
-Final files are written only after required decisions are resolved:
+A passing verdict makes the current Feature state `accepted`; `changes-required` normally leads to another Work Plan under the same Feature. Requirement, architecture/security, public-contract, or acceptance changes require formal replanning and potentially a new requirements version. Minor compatible implementation adaptations belong in `RESULT.md`.
 
-- alternatives and their trade-offs are retained in phase `DESIGN.md` for learning;
-- phase `PLAN.md` contains only the selected implementation path;
-- unresolved alternatives never leak into executable tasks.
+See [Schema v4 package contract](./plan-package.md) and [operations](./operations.md).
 
-The decision-tree and recommendation approach was informed by [`rxhuljoshi/grill-me-plugin`](https://github.com/rxhuljoshi/grill-me-plugin); this repository implements its own consolidated bilingual workflow.
+## Safety boundary
 
-## Phase documents and re-plan loop
+The extension itself reads metadata and dispatches a validated prompt. Planning writes only workflow Markdown; execution uses the active model's normal tools within the approved Work Plan; review is read-only except for one new Review and status/history registration. Templates never authorize `.gitignore` changes or Git staging, commit, push, reset, clean, stash, checkout, history rewrite, or unrelated-work deletion. Prompt policy is not an OS sandbox.
 
-Each phase owns four separate concerns:
-
-- `DESIGN.md` — reasoning, final design, considered alternatives and rejection reasons;
-- `PLAN.md` — selected implementation and task state only;
-- `ACCEPTANCE.md` — independent observable acceptance scenarios;
-- `RESULT.md` — actual implementation, verification, deviations, reasons, and remaining issues.
-
-Execution never rewrites PLAN to hide reality. A minor adaptation is recorded in RESULT. A material change to requirements, architecture, task meaning, or acceptance stops execution and returns to `/make-plan` for a new version. See [the full schema](./plan-package.md).
-
-## Command semantics
-
-### `/make-plan [root=<path>] <request>`
-
-A prompt template that explores, asks a consolidated decision questionnaire when needed, and then creates/revises schema v2. It writes planning Markdown only.
-
-### `/do-plan [optional-plan-directory]`
-
-An Extension command. With no argument it discovers plans beneath `docs/plans` and `tmp/plans`, then opens plan, phase, and task selectors. Supplying a plan directory skips the first selector. The selected task is handed to `/execute-plan` as a precise expanded prompt.
-
-`/do-plan` requires interactive UI. It does not attempt unsafe pseudo-selection in print/RPC modes.
-
-### `/execute-plan <plan-directory> <task-id>`
-
-The underlying execution prompt. It is normally invoked by `/do-plan`, but can be called directly for non-interactive automation. It executes exactly one task, verifies acceptance, and records actual results.
-
-## Package and permission boundary
-
-- Core: `packages/plan-workflow/`
-- Pi adapter/prompts: `plugins/plan-workflow/`
-- The extension itself reads plan metadata and sends the selected execution prompt. It does not edit files, switch models, start timers, or launch processes.
-- The active model may use available Pi tools according to the planning/execution prompt. Prompt policy is not an OS sandbox; users must review tool calls and plans.
-
-## Related pages
-
-- [Schema v2 and legacy compatibility](./plan-package.md)
-- [Installation, migration, recovery, and limitations](./operations.md)
-- [Historical automatic multi-model proposal](../../plans/2026-09-18-plan-execute-system/README.md)
+See [ADR 0003](../../adr/0003-hybrid-plan-workflow.md) for the architecture decision.

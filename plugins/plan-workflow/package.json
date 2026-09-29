@@ -1,7 +1,7 @@
 {
   "name": "@mgood-pi/plugin-plan-workflow",
   "version": "0.2.0",
-  "description": "Interactive Plan Workflow selector and bilingual planning/execution prompts for Pi.",
+  "description": "Interactive bilingual Feature, Work Plan execution, and implementation review workflow for Pi.",
   "type": "module",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",
@@ -15,7 +15,7 @@
     "prompt-template"
   ],
   "files": [
-    "src",
+    "src/index.ts",
     "prompts",
     "README.md",
     "CHANGELOG.md"
@@ -26,10 +26,6 @@
   "pi": {
     "extensions": [
       "src/index.ts"
-    ],
-    "prompts": [
-      "prompts/make-plan.md",
-      "prompts/execute-plan.md"
     ]
   },
   "exports": {

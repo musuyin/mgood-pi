@@ -2,107 +2,121 @@
 
 ## Install
 
-Install the Pi-facing package, not the core package:
+Install only the Pi-facing plugin:
 
 ```bash
+pi install npm:@mgood-pi/plugin-plan-workflow
+# local development
 pi install -l ./plugins/plan-workflow
 ```
 
-Omit `-l` for user-level settings. For one development run:
-
-```bash
-pi -e ./plugins/plan-workflow
-```
-
-The package bundles its core workspace dependency and declares one extension plus two prompts.
+For one development run: `pi -e ./plugins/plan-workflow`. The plugin bundles its core dependency and three private internal Markdown guidance files.
 
 ## Model and language
 
-Templates use the active session model and never invoke `/model` themselves. Use a strong model for repository exploration/decision design and a cost-effective coding model for bounded tasks.
+Use Pi's `/model` before any stage when desired. The workflow never changes models. New Features infer `zh-CN` or `en`; later Work Plans and Reviews inherit Feature language.
 
-Language is selected from the planning request and persisted as `zh-CN` or `en`. To override detection, state the desired documentation language in the request.
+## Create planning state
 
-## Interactive execution
-
-Run:
+Interactive action menu:
 
 ```text
-/do-plan
+/mgood:plan-make
 ```
 
-Use arrow keys to choose a plan, phase, and task. Plan rows show aggregate task counts; task rows show status symbols. Escape/cancel performs no agent turn and no write.
-
-You can skip plan selection:
+Direct forms:
 
 ```text
-/do-plan docs/plans/2026-09-21-example
+/mgood:plan-make Add resumable uploads
+/mgood:plan-make feature=work-plans/uploads Add retry telemetry
+/mgood:plan-make review=work-plans/uploads/work-plans/001-initial/reviews/20260922T100000-review.md
 ```
 
-For print/RPC/non-interactive use, supply exact identity directly:
+Ordinary text always starts a new Feature. Use `feature=` for another iteration and `review=` for remediation. The planner may ask one consolidated decision questionnaire before writing files.
+
+## List workflow state
 
 ```text
-/execute-plan docs/plans/2026-09-21-example AUTH-101
+/mgood:plan-list
+/mgood:plan-list work-plans/uploads
 ```
 
-## Clarification answers
+This read-only command lists each Feature's status plus Work Plan execution, review, and checklist totals. In the TUI, after listing all Plans or one Feature's Plans, it offers a selector to read one Plan's complete canonical `APPROVAL.md`; a validated Plan directory opens that detail directly. It accepts directories only—not `APPROVAL.md` or arbitrary file paths—and makes no model turn or write in TUI, print, JSON, and RPC modes using Pi's normal text output.
 
-When `/make-plan` returns a questionnaire, answer all IDs together:
+## Review and approve a draft Plan
 
 ```text
-Q1=A, Q2=C: keep compatibility for 30 days, Q3=B
+/mgood:plan-list work-plans/uploads/work-plans/001-initial
+/mgood:plan-approve work-plans/uploads/work-plans/001-initial
 ```
 
-Or accept all recommendations:
+When `/mgood:plan-make` adds a Plan to a Feature with an unfinished draft, approved, or blocked Plan, it can record an optional `supersedes` intent in the new draft `APPROVAL.md`. This does not change the old Plan. On approval, `/mgood:plan-approve` validates that the referenced Plan belongs to the same Feature and remains eligible, then marks it `superseded`, records the reverse link and timestamp, moves the Feature `current_work_plan` pointer, and appends the joint event to `HISTORY.md`. Active and completed Plans cannot be superseded.
+
+`/mgood:plan-approve` is TUI-only. It accepts only a valid draft Plan directory, displays its complete `APPROVAL.md`, then asks whether to approve it. **Yes** directly changes the Approval frontmatter (`status`, `approved_at`, `approval_note: null`) and appends a UTC approval event to the owning Feature `HISTORY.md`. **No** requires approval feedback: when provided, it keeps the Plan as draft and appends the feedback to `HISTORY.md`; an empty or cancelled feedback entry makes no write. It does not call a model, Git, stage, or commit. Print, JSON, and RPC modes reject the operation without writing.
+
+## Execute and resume
 
 ```text
-recommended
+/mgood:plan-do
+/mgood:plan-do work-plans/uploads/work-plans/001-initial
 ```
 
-Continue the current session so the planner has its question context. If the session is lost, invoke `/make-plan <plan-directory-or-original-request>` again; no incomplete plan should have been written before decisions were resolved.
+The selector groups labels by Feature and shows aggregate checklist/review state. It ends with a manual-path option. Only approved/active/blocked, incomplete Plans are selectable. New Plans are intentionally written as `status: draft`: review them with `/mgood:plan-list`, then explicitly approve them with `/mgood:plan-approve` before `/mgood:plan-do`. Execution automatically resumes and advances phases/checklists in document order until completion or a genuine safety, external-access, user-decision, material-design, conflict, context, or tool boundary.
 
-## Storage and recovery
+After completion, Work Plan execution is `completed`, review remains `pending`, and Feature becomes `review_pending`.
 
-| Use                   | Suggested root         | Expected Git behavior |
-| --------------------- | ---------------------- | --------------------- |
-| Shared feature wiki   | `docs/plans`           | Usually committed     |
-| Personal exploration  | `tmp/plans`            | Usually ignored       |
-| Repository convention | `root=<relative-path>` | User-managed          |
+## Independent review
 
-The extension reads only repository-local discovered plans and rejects plan-directory symlink escape. Prompt-level file policy still requires review because model tools are not sandboxed by this plugin.
+```text
+/mgood:plan-review
+/mgood:plan-review work-plans/uploads/work-plans/001-initial
+```
 
-After interruption, a task may be `[>]`. Select it again in `/do-plan`; the executor first reads RESULT/HISTORY and overlapping changes before resuming.
+Only completed Work Plans are selected. Review may inspect files/Git state and run safe existing checks. It writes one immutable report under the Work Plan's `reviews/`, updates review/Feature status, and appends Feature history. It does not fix implementation or create remediation.
+
+For `changes-required`, run `/mgood:plan-make` and select the Review (or use `review=<path>`), review the new Plan with `/mgood:plan-list`, approve it with `/mgood:plan-approve`, then run `/mgood:plan-do` and `/mgood:plan-review` again.
+
+## Storage and path safety
+
+The only root is `work-plans/`. There is no root setting and no recursive search for similarly named directories. Direct/manual paths must:
+
+- be repository-relative;
+- exist;
+- remain under the fixed root after `realpath` resolution;
+- parse as the object required by that command.
+
+Do not use `.mgood-pi/`; it is ignored local state reserved for memory/indexing. Workflow Markdown under the repository-root `work-plans/` directory is intended to be easy to upload, share, and commit deliberately.
+
+## Non-interactive behavior
+
+The four mutating commands (`/mgood:plan-make`, `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review`) are TUI workflows. In print/json/rpc modes they fail closed with a concise diagnostic and perform no model turn or write. `/mgood:plan-list` is the read-only exception: it prints discovered status in every mode and never starts a model turn. Internal prompt Markdown is packaged implementation guidance rather than registered Pi commands; automation should pass validated fixed-root paths and accept that prompt policy is not an OS sandbox.
+
+## Recovery
+
+After interruption, run `/mgood:plan-do` and select the same Work Plan. `[>]`, `[!]`, RESULT, and Feature HISTORY identify the resume point; no phase/task ID is requested. A blocker should be retried when current evidence makes it resolvable within approved design.
+
+If requirements, architecture/security, public behavior, compatibility, or acceptance must change, stop and use `/mgood:plan-make` to create another Work Plan. Do not edit completed PLAN/ACCEPTANCE or immutable Reviews after the fact.
+
+## Troubleshooting
+
+- **Command missing/collision:** inspect `pi list`, reload Pi, and remove a package defining the same `/mgood:plan-*` command. The plugin refuses to shadow any of its five public commands.
+- **Object not listed:** confirm Schema v4 frontmatter and location under `work-plans`; legacy `docs/plans`, `tmp/plans`, and custom roots are not scanned.
+- **Plan not executable:** it is usually still `status: draft`; use `/mgood:plan-list <plan-directory>` to read it, then `/mgood:plan-approve <plan-directory>`. It must then have incomplete checklist work.
+- **Plan not reviewable:** execution must be completed.
+- **Long run stops:** rerun `/mgood:plan-do`; the executor continues from durable state.
 
 ## Uninstall
 
 ```bash
-pi remove -l ./plugins/plan-workflow
+pi remove -l "$(pwd)/plugins/plan-workflow" # project
+pi remove /absolute/path/to/plugins/plan-workflow # user
 ```
 
-Plans and implementation changes remain user-owned and are not deleted.
+Uninstall does not remove user-owned `work-plans` data or implementation changes.
 
-## Troubleshooting
+## Known limits
 
-### `/do-plan` is missing or collides
-
-Confirm `pi list` and `pi config`, then reload Pi. Disable any old prompt package that still owns a `do-plan.md` command; v0.2 reserves `/do-plan` for the extension selector. The extension detects an existing command and refuses to shadow it.
-
-### A plan is not listed
-
-Schema v2 requires README frontmatter with `plan_id` and at least one `phases/phase-*/PLAN.md`. Legacy v1 requires `plan_id` and a valid `current_implementation` pointer. Default roots are `docs/plans` and `tmp/plans`.
-
-### A task is not parsed
-
-Use the exact heading shape `- [ ] **PREFIX-001: Title**` and a supported marker (` `, `>`, `!`, `x`).
-
-### Implementation differs from the plan
-
-Do not rewrite the intended PLAN after the fact. Record a minor adaptation in RESULT, or stop and run `/make-plan <plan-directory> <change>` for a material re-plan.
-
-## Remaining limitations
-
-- no automatic model switching;
-- no atomic multi-file transaction or concurrent edit lock;
-- no enforced YAML schema parser yet;
-- custom plan roots are usable by direct path but not yet configurable in selector discovery;
-- prompt-guided writes are not an OS sandbox;
-- no automatic Git checkpoint.
+- no automatic model switching, Git checkpoint, atomic multi-file transaction, or concurrent writer lock;
+- frontmatter parsing is intentionally narrow rather than a general YAML parser;
+- prompt-guided model actions are not an OS sandbox;
+- independent review cannot prove checks that require unavailable external systems.

@@ -1,7 +1,14 @@
 # @mgood-pi/plan-workflow-core
 
-Framework-neutral discovery and parsing for Plan Workflow packages. It supports the phase-based schema v2 and legacy schema v1 plans.
+Framework-neutral, read-only discovery and parsing for Plan Workflow Schema v4.
 
-End users should install [`@mgood-pi/plugin-plan-workflow`](../../plugins/plan-workflow/README.md), which provides the interactive `/do-plan` command and bundled prompt templates.
+It provides:
 
-This implementation package is independently versioned and published so the plugin can consume it as a normal npm dependency.
+- the fixed root contract `work-plans`;
+- Feature, Work Plan, ordered Phase/checklist, and immutable Review discovery;
+- execution/review status aggregation;
+- explicit object loading with canonical `realpath` containment and symlink-escape rejection.
+
+It intentionally does not discover legacy schema v1/v2, `docs/plans`, `tmp/plans`, configurable roots, or arbitrary directories named `work-plans`.
+
+End users should install [`@mgood-pi/plugin-plan-workflow`](../../plugins/plan-workflow/README.md), which bundles this package and provides `/mgood:plan-make`, `/mgood:plan-list`, `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review`. This implementation package is independently versioned/published only so the plugin can consume it as a normal npm dependency.

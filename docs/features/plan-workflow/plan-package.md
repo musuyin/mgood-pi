@@ -1,115 +1,101 @@
-# Plan package contract
+# Schema v4 plan package contract
 
-Schema v2 separates durable feature knowledge, per-phase design, executable intent, acceptance, and observed implementation.
-
-## Layout
+## Hierarchy and layout
 
 ```text
-<plan-root>/
-└── YYYY-MM-DD-stable-slug/
-    ├── README.md
-    ├── CONTEXT.md
-    ├── HISTORY.md
-    ├── requirements/
-    │   ├── v1.md
-    │   └── v2.md
-    └── phases/
-        ├── phase-1-foundation/
-        │   ├── DESIGN.md
-        │   ├── PLAN.md
-        │   ├── ACCEPTANCE.md
-        │   └── RESULT.md
-        └── phase-2-integration/
-            └── ...
+work-plans/<feature-slug>/
+├── README.md                       # Feature identity, pointers, aggregate state
+├── CONTEXT.md                      # maintained cumulative product/repository truth
+├── HISTORY.md                      # append-only lifecycle events
+├── requirements/vN.md              # cumulative observable baseline
+└── work-plans/
+    └── NNN-<iteration-slug>/
+        ├── APPROVAL.md             # canonical execution/review authorization and approval audit
+        ├── phases/
+        │   └── phase-N-<slug>/
+        │       ├── DESIGN.md
+        │       ├── PLAN.md
+        │       ├── ACCEPTANCE.md
+        │       └── RESULT.md
+        └── reviews/
+            └── YYYYMMDDTHHMMSS-review.md
 ```
 
-The root date, slug, and `plan_id` remain stable. Phase directories are ordered, bounded delivery slices rather than arbitrary categories.
+No other plan root is supported. A Feature slug is stable. Work Plan sequences are monotonically increasing three-digit prefixes. Reviews are immutable files owned by the Work Plan they assess.
 
-## Shared metadata
+## Authority and states
 
-Every file contains:
+### Feature
 
-```yaml
-plan_id: 2026-09-21-example
-schemaVersion: 2
-version: 1
-revision: 1
-status: draft
-language: zh-CN # or en
-created: 2026-09-21T10:30:00Z
-updated: 2026-09-21T10:30:00Z
+Feature `README.md` is authoritative for `feature_id`, current requirements/Work Plan pointers, language, and aggregate status:
+
+- `planning`
+- `active`
+- `review_pending`
+- `changes_required`
+- `review_blocked`
+- `accepted`
+- `paused`
+- `abandoned`
+- `superseded`
+
+`CONTEXT.md` is maintained cumulative truth, `requirements/vN.md` is the current product/acceptance contract, and `HISTORY.md` is append-only. Prior Work Plan Results and Reviews remain evidence and are not rewritten to simulate current truth.
+
+### Work Plan
+
+Work Plan `APPROVAL.md` is authoritative for:
+
+- identity: `feature_id`, `work_plan_id`, `sequence`, `kind`;
+- execution `status`: `draft`, `approved`, `active`, `blocked`, `completed`, `superseded`, or `abandoned`;
+- independent `review_status`: `pending`, `pass`, `pass-with-notes`, `changes-required`, or `blocked`;
+- requirements pointer and optional `source_review`/`addresses` lineage;
+- approval audit: `approved_at` and optional `approval_note` (no fabricated approver identity);
+- optional replacement lineage: a new draft's `supersedes`, and the approved replacement's old Plan `superseded_by`, `superseded_at`, and optional `supersede_reason`.
+
+Only `/mgood:plan-approve` may transition a valid `draft` Plan to `approved` or make a declared same-Feature supersession effective. It displays the complete `APPROVAL.md`, asks Yes/No in TUI, directly approves on Yes, and records required feedback while retaining `draft` on No. On a valid supersession it also updates the predecessor, Feature current-Plan pointer, and append-only `HISTORY.md`. Execution completion and review acceptance are separate. `/mgood:plan-do` acts only on approved/active/blocked incomplete Work Plans. `/mgood:plan-review` acts only on completed Work Plans.
+
+### Phase and checklist
+
+Each Phase owns `DESIGN.md`, `PLAN.md`, `ACCEPTANCE.md`, and `RESULT.md`:
+
+- DESIGN preserves selected architecture, evidence, decisions, and rejected alternatives.
+- PLAN contains only the chosen implementation and ordered checklist.
+- ACCEPTANCE remains independent and cannot be weakened during execution.
+- RESULT records actual changes, verification, deviations, and remaining issues.
+
+Checklist markers are `[ ]` not started, `[>]` running/interrupted, `[!]` runtime blocked evidence, and `[x]` complete. IDs are stable and unique within the Feature. Phase order and checklist document order are sequencing; there are no task edges or `Depends on` fields.
+
+A new executable Work Plan contains no `[!]`. During execution, `[!]` triggers current-evidence reassessment and bounded recovery rather than permanent refusal.
+
+## Reviews and remediation
+
+`/mgood:plan-review` reviews the selected Work Plan's contract and changes while validating cumulative Feature behavior. It writes a new UTC timestamped Review and does not modify implementation or old Reviews.
+
+Verdicts:
+
+- `pass`: accepted with no actionable findings;
+- `pass-with-notes`: accepted with non-blocking notes only;
+- `changes-required`: another Work Plan is needed;
+- `blocked`: evidence/access/environment prevents reliable review.
+
+Findings use stable IDs such as `REV-001`, severity, violated contract, evidence, impact, required outcome, and closure verification. Findings are evidence, not mutable tasks. A remediation Work Plan references the immutable `source_review` and its `addresses` IDs, then groups work into its own coherent checklist. A later Review independently verifies closure.
+
+## Lifecycle
+
+```text
+Feature planning
+  → Work Plan draft/approved
+  → active execution
+  → completed + review pending
+  → Review pass/pass-with-notes → Feature accepted
+  → Review changes-required    → remediation Work Plan → execute → Review
+  → Review blocked             → Feature review_blocked until a later Review
 ```
 
-Allowed package/phase states: `draft`, `approved`, `active`, `completed`, `superseded`, `abandoned`.
+Minor compatible implementation adaptations are recorded in RESULT. Material changes to requirements, architecture/security, public contracts, compatibility, or acceptance require a new Work Plan and, when necessary, a new requirements version. Never rewrite a completed plan or Review to hide history.
 
-`README.md` additionally stores `current_requirements`, `current_phase`, and ordered phase pointers. These pointers, not lexicographic filename order, identify the active baseline.
+## Required frontmatter
 
-## Root documents
+Every Schema v4 object includes `schemaVersion: 4`, stable identity fields, language, status/verdict, and timestamps appropriate to its type. Work Plan `APPROVAL.md` additionally contains `approved_at` and `approval_note`, both `null` while draft. Repository-relative pointers are resolved from the owning document and must remain under `work-plans` after canonicalization.
 
-### `README.md`
-
-Stable index with summary, pointers, document map, phase progress, interactive `/do-plan` instructions, and unresolved decisions.
-
-### `CONTEXT.md`
-
-The maintained feature wiki: problem, repository facts with path citations, users, workflows, architecture, scope, constraints, terminology, and final cross-phase decisions.
-
-### `requirements/vN.md`
-
-Observable `R1`, `R2`, ... behavior baseline with acceptance criteria, edge cases, non-functional requirements, exclusions, and `supersedes` linkage.
-
-### `HISTORY.md`
-
-Append-only events for planning decisions, task start/completion/failure, observed deviations, re-plan, supersession, and abandonment. It never stores secrets or large diffs.
-
-## Phase documents
-
-### `DESIGN.md`
-
-Contains phase goal, evidence, constraints, selected design, interfaces/data flow, user decisions, and alternatives with rejection reasons. This is where design experience is retained.
-
-### `PLAN.md`
-
-Contains only the final selected implementation. Alternatives, unresolved branches, and speculative “maybe” paths are forbidden.
-
-Tasks use stable IDs and four markers:
-
-```markdown
-- [ ] **AUTH-101: Not-started task**
-- [>] **AUTH-102: Running or interrupted task**
-- [!] **AUTH-103: Blocked task**
-- [x] **AUTH-104: Completed task**
-```
-
-Each full task includes requirements, dependencies, paths, bounded work, done criteria, and exact verification. IDs are globally unique and dependencies acyclic.
-
-### `ACCEPTANCE.md`
-
-Independent acceptance contract. It maps requirements/tasks to scenarios with preconditions, action, expected result, exact verification, phase exit criteria, and known non-blocking limitations. Execution cannot weaken it simply because implementation is difficult.
-
-### `RESULT.md`
-
-Observed truth, initially “not implemented”. Execution appends/updates:
-
-- task and changed paths;
-- commands and verification outcomes;
-- actual behavior;
-- differences from DESIGN/PLAN;
-- why the planned route was infeasible;
-- impact and re-plan decision;
-- remaining issues.
-
-PLAN says what should happen; RESULT says what did happen.
-
-## Re-act and re-plan
-
-- Minor adaptation that preserves requirements, architecture, behavior, task meaning, and acceptance is completed and explained in RESULT.
-- Material deviation stops execution, leaves the task running/blocked, records evidence, and invokes `/make-plan <existing-directory> <change>`.
-- Requirements/design/plan/acceptance freeze once execution starts. Semantic changes create a new baseline rather than editing history.
-- Replacement tasks are classified `carried_forward`, `revalidate`, `replaced`, or `dropped` with evidence/reason.
-
-## Legacy schema v1
-
-The selector continues to read plans whose README points to `current_implementation`. Such plans appear as one `legacy` phase and execute with inline `Execution`/`Evidence` plus HISTORY.
-
-Schema v1 is not automatically rewritten. Revise an old plan with `/make-plan <plan-directory> <change>` when phase separation is useful; preserve its old implementation files and history.
+Legacy schema v1/v2 is intentionally unsupported at runtime. This repository's historical plans were manually migrated; external users must migrate rather than relying on compatibility parsing.
