@@ -85,6 +85,10 @@ describe("Git plugin", () => {
       "If any staged or mixed staged/unstaged content exists, stop without committing",
     );
     expect(prompt).toContain("conflict/sequencer state");
+    expect(prompt).toContain("likely secrets or private keys");
+    expect(prompt).toContain("conventional project PNG");
+    expect(prompt).toContain("Do not stop merely because a conventional project PNG is binary");
+    expect(prompt).toContain("source, Markdown, configuration, lockfile");
     expect(prompt).toContain("submodule/nested repository");
     expect(prompt).toContain("hunk splitting to avoid mixing unrelated changes");
     expect(prompt).toContain("Absolute semantic proof is not required");

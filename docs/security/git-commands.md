@@ -17,10 +17,10 @@
 ## 主要威胁和缓解
 
 - **Prompt injection、模型偏离或过宽工具权限：** Prompt 明确一次授权、current worktree、精确 paths、禁止 broad/destructive Git 和 no-push，并要求证据不足时停止；但 Pi Agent、bash、hooks 和外部进程仍有本地用户权限。不要把该 Prompt 误称为 sandbox；需要硬 gate 时另行配置 Pi/tool policy。
-- **意外包含、混合 index 或跨 worktree 写入：** 仅无 staged path 的 clean index、纯 unstaged/untracked whole-file 候选可尽力分组；这不要求绝对语义证明，却仍要求避开明显无关文件。staged/mixed、operation/scope uncertainty、submodule/nested、风险内容与 hunk-required 文件均在 mutation 前零 commit 停止；已提交合理 groups 后的 ambiguous remainder 也必须留下而非默认收尾。真实验收必须检验此行为，自动测试不能证明 Agent 一定遵守。
+- **意外包含、混合 index 或跨 worktree 写入：** 仅无 staged path 的 clean index、纯 unstaged/untracked whole-file 候选可尽力分组；这不要求绝对语义证明，却仍要求避开明显无关文件。staged/mixed、operation/scope uncertainty、submodule/nested、明显 secrets/私钥、无法识别或 unsafe/generated content 与 hunk-required 文件均在 mutation 前零 commit 停止；常规项目 PNG 不因 binary 属性停止，按其 exact path、名称、仓库角色和功能关系作为普通项目资源处理；已提交合理 groups 后的 ambiguous remainder 也必须留下而非默认收尾。真实验收必须检验此行为，自动测试不能证明 Agent 一定遵守。
 - **参数/argv/path injection：** handler 不执行参数，只把其插入 Prompt 的明示约束位置；Prompt 要求参数不能当 shell/Git arguments。push 使用 direct argv 和验证后的 configured upstream/refspec。
 - **TOCTOU：** Prompt 要求每次 mutation 前重查 drift 和 staged membership；这是行为协议而非 lock。push core 在 preview 后对 repository/HEAD/branch/upstream/remote identity/refspec 做 fingerprint revalidation。
-- **secrets、binary、生成物和 unsafe repository state：** Prompt 要求 Agent识别而非盲目读取或提交；证据不足时停止。实际处理质量必须由真实 Agent 场景审查。
+- **secrets、私钥、生成物和 unsafe repository state：** Prompt 要求 Agent识别而非盲目读取或提交；证据不足时停止。常规项目 PNG 仅因二进制属性不构成风险：Agent 按 exact path、名称、仓库角色及其与功能的关系判断，可与相关项目文件一起 exact-path stage，而无需解析像素。实际处理质量必须由真实 Agent 场景审查。
 - **hooks 与中断：** Prompt 要求 hooks 正常运行，failure/cancellation/partial sequence 后停止、保留成功 commit、报告状态且不自动修复。push 中断的 remote 结果可未知，须人工检查。
 - **无预览的一键风险：** 成功默认只报告 SHA/message，不列 file list；Prompt 要求静默检查、exact-path staging 和安全停止。clean-index 尽力分组不是任意混合状态放宽、完整提交保证或默认 remainder commit。真实 transcript 必须证明 Agent没有先展示计划/要求确认、没有使用 broad command、没有吞没 existing staged/mixed 内容。
 - **隐藏消息可见性误解：** `display: false` 不显示在 TUI transcript，却不提供保密、清除、加密或 export exclusion；handler 不向 `details`、notification 或日志复制 Prompt/constraints。真实验收必须分别确认显示隐藏和上下文触发，不能从 TUI 看不见推断无持久化。
