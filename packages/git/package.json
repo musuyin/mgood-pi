@@ -1,0 +1,39 @@
+{
+  "name": "@mgood-pi/git",
+  "version": "0.1.0",
+  "description": "Framework-neutral configured-upstream push safety core for the mgood-pi Git plugin.",
+  "license": "MIT",
+  "repository": "https://github.com/musuyin/mgood-pi.git",
+  "homepage": "https://github.com/musuyin/mgood-pi#readme",
+  "bugs": "https://github.com/musuyin/mgood-pi/issues",
+  "keywords": [
+    "git",
+    "safety",
+    "pi-package"
+  ],
+  "type": "module",
+  "files": [
+    "src",
+    "!src/**/*.test.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}
