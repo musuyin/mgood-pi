@@ -237,7 +237,15 @@ async function chooseReview(ctx: ExtensionCommandContext): Promise<ReviewSummary
 
 async function send(pi: ExtensionAPI, prompt: InternalPrompt, target: string): Promise<void> {
   const source = await readFile(path.join(PROMPT_DIRECTORY, PROMPT_FILES[prompt]), "utf8");
-  pi.sendUserMessage(source.replace(/^---\n[\s\S]*?\n---\n?/u, "").replace(/\$@/gu, target));
+  pi.sendMessage(
+    {
+      customType: "mgood-plan-workflow",
+      content: source.replace(/^---\n[\s\S]*?\n---\n?/u, "").replace(/\$@/gu, target),
+      display: false,
+      details: { operation: prompt, target },
+    },
+    { triggerTurn: true },
+  );
 }
 
 function listSummary(features: readonly FeatureSummary[]): string {

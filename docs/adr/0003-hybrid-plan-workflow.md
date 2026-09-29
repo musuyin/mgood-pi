@@ -26,7 +26,7 @@ Feature owns cumulative requirements/context/history. Work Plan is one execution
 
 Use exactly one unbranded repository-relative root: `work-plans/`. This makes the directory straightforward to upload or share without a product-specific wrapper. Do not scan other same-named folders and do not support configurable roots. Manual and direct paths are allowed only for valid Schema v4 objects under the canonical fixed root, including symlink-escape rejection. `.mgood-pi/` remains distinct ignored local memory/index state.
 
-The user chooses models through Pi's `/model`; the workflow never switches them. The four mutating commands require TUI and fail closed in non-interactive modes; read-only `/mgood:plan-list` prints status and canonical Plan details in every mode. Internal `create-work-plan`, `execute-work-plan`, and `review-implementation` Markdown is read by the Extension and is not registered as public prompt commands.
+The user chooses models through Pi's `/model`; the workflow never switches them. The four mutating commands require TUI and fail closed in non-interactive modes; read-only `/mgood:plan-list` prints status and canonical Plan details in every mode. Internal `create-work-plan`, `execute-work-plan`, and `review-implementation` Markdown is read by the Extension, injected as hidden custom session messages that remain in LLM context, and is not registered as public prompt commands.
 
 Schema v4 deliberately drops runtime compatibility with schema v1/v2. Existing repository plans are migrated manually so the runtime has one unambiguous contract.
 
