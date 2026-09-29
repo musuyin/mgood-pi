@@ -5,6 +5,7 @@
     "noEmit": true,
     "paths": {
       "@mgood-pi/core": ["packages/core/src/index.ts"],
+      "@mgood-pi/git": ["packages/git/src/index.ts"],
       "@mgood-pi/plan-workflow-core": ["packages/plan-workflow/src/index.ts"]
     }
   },

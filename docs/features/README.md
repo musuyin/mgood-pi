@@ -1,7 +1,8 @@
 # Feature documentation
 
-Each implemented user-facing capability owns maintained wiki-style documentation. Historical proposals live under `docs/plans`; unplanned ideas live under `docs/backlog`.
+Each implemented user-facing capability owns maintained wiki-style documentation. Durable Plan Workflow product data and migrated historical proposals live under `work-plans`; unplanned ideas live under `docs/backlog`.
 
-| Feature       | Status          | Documentation                              |
-| ------------- | --------------- | ------------------------------------------ |
-| Plan Workflow | v0.2 hybrid MVP | [Plan Workflow](./plan-workflow/README.md) |
+| Feature           | Status                           | Documentation                              |
+| ----------------- | -------------------------------- | ------------------------------------------ |
+| Plan Workflow     | Schema v4 hybrid workflow        | [Plan Workflow](./plan-workflow/README.md) |
+| Safe Git commands | Implemented; pending npm release | [Safe Git commands](./git/README.md)       |
