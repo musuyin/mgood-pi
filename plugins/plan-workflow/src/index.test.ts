@@ -51,11 +51,18 @@ function handlers(
 
 function setup() {
   const registerCommand = vi.fn();
+  const sendMessage = vi.fn();
   const sendUserMessage = vi.fn();
   const on = vi.fn();
-  registerPlanWorkflow({ registerCommand, sendUserMessage, getCommands: () => [], on } as never);
+  registerPlanWorkflow({
+    registerCommand,
+    sendMessage,
+    sendUserMessage,
+    getCommands: () => [],
+    on,
+  } as never);
   startSession(on);
-  return { registerCommand, sendUserMessage, commands: handlers(registerCommand) };
+  return { registerCommand, sendMessage, sendUserMessage, commands: handlers(registerCommand) };
 }
 
 function context(cwd: string, ui: object) {
@@ -83,7 +90,7 @@ describe("plan workflow plugin", () => {
   it("selects one Work Plan and dispatches bundled internal execution guidance", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const select = vi
       .fn()
       .mockResolvedValueOnce(
@@ -93,30 +100,44 @@ describe("plan workflow plugin", () => {
     await commands["mgood:plan-do"]!("", context(cwd, { select, input: vi.fn(), notify: vi.fn() }));
 
     expect(select).toHaveBeenCalledTimes(1);
-    expect(sendUserMessage).toHaveBeenCalledWith(
-      expect.stringContaining("work-plans/example/work-plans/001-initial"),
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customType: "mgood-plan-workflow",
+        content: expect.stringContaining("work-plans/example/work-plans/001-initial"),
+        display: false,
+        details: { operation: "execute", target: "work-plans/example/work-plans/001-initial" },
+      }),
+      { triggerTurn: true },
     );
+    expect(sendUserMessage).not.toHaveBeenCalled();
   });
 
   it("adds a Plan to an explicit Feature under the fixed root", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
 
     await commands["mgood:plan-make"]!(
       "feature=work-plans/example Add retry telemetry",
       context(cwd, { select: vi.fn(), input: vi.fn(), notify: vi.fn() }),
     );
 
-    expect(sendUserMessage).toHaveBeenCalledWith(
-      expect.stringContaining("feature=work-plans/example Add retry telemetry"),
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customType: "mgood-plan-workflow",
+        content: expect.stringContaining("feature=work-plans/example Add retry telemetry"),
+        display: false,
+        details: { operation: "create", target: "feature=work-plans/example Add retry telemetry" },
+      }),
+      { triggerTurn: true },
     );
+    expect(sendUserMessage).not.toHaveBeenCalled();
   });
 
   it("creates remediation from a selected Review", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd, true);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const select = vi
       .fn()
       .mockResolvedValueOnce("Create remediation from a Review / 从 Review 创建修复计划")
@@ -129,32 +150,49 @@ describe("plan workflow plugin", () => {
       context(cwd, { select, input: vi.fn(), notify: vi.fn() }),
     );
 
-    expect(sendUserMessage).toHaveBeenCalledWith(
-      expect.stringContaining(
-        "review=work-plans/example/work-plans/001-initial/reviews/20260922-review.md",
-      ),
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customType: "mgood-plan-workflow",
+        content: expect.stringContaining(
+          "review=work-plans/example/work-plans/001-initial/reviews/20260922-review.md",
+        ),
+        display: false,
+        details: {
+          operation: "create",
+          target: "review=work-plans/example/work-plans/001-initial/reviews/20260922-review.md",
+        },
+      }),
+      { triggerTurn: true },
     );
+    expect(sendUserMessage).not.toHaveBeenCalled();
   });
 
   it("reviews a completed Plan supplied by path", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd, true);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
 
     await commands["mgood:plan-review"]!(
       "work-plans/example/work-plans/001-initial",
       context(cwd, { select: vi.fn(), input: vi.fn(), notify: vi.fn() }),
     );
 
-    expect(sendUserMessage).toHaveBeenCalledWith(
-      expect.stringContaining("work-plans/example/work-plans/001-initial"),
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customType: "mgood-plan-workflow",
+        content: expect.stringContaining("work-plans/example/work-plans/001-initial"),
+        display: false,
+        details: { operation: "review", target: "work-plans/example/work-plans/001-initial" },
+      }),
+      { triggerTurn: true },
     );
+    expect(sendUserMessage).not.toHaveBeenCalled();
   });
 
   it("lists Feature and Plan status without prompting the model", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
 
     await commands["mgood:plan-list"]!("", context(cwd, { notify }));
@@ -169,7 +207,7 @@ describe("plan workflow plugin", () => {
   it("offers detailed read-only Plan content from the list selector without prompting the model", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
     const select = vi
       .fn()
@@ -190,7 +228,7 @@ describe("plan workflow plugin", () => {
   it("reads a Plan directory including APPROVAL.md without prompting the model", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
 
     await commands["mgood:plan-list"]!(
@@ -214,7 +252,7 @@ describe("plan workflow plugin", () => {
       "work-plans/example/work-plans/001-initial/APPROVAL.md",
       "---\ntitle: Initial implementation\nfeature_id: example\nwork_plan_id: 001-initial\nschemaVersion: 4\nsequence: 1\nstatus: draft\nreview_status: pending\nlanguage: en\napproved_at: null\napproval_note: null\n---\n# Approval\n",
     );
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
     const input = vi.fn();
     const confirm = vi.fn().mockResolvedValue(true);
@@ -344,7 +382,7 @@ describe("plan workflow plugin", () => {
   it("rejects APPROVAL.md paths rather than using list as an arbitrary file reader", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
 
     await commands["mgood:plan-list"]!(
@@ -387,7 +425,7 @@ describe("plan workflow plugin", () => {
   it("lists in non-TUI mode and rejects paths outside the fixed root", async () => {
     const cwd = await mkdtemp(path.join(tmpdir(), "mgood-plugin-plan-"));
     await createFeature(cwd);
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const output = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
@@ -411,7 +449,7 @@ describe("plan workflow plugin", () => {
       "work-plans/example/work-plans/001-initial/APPROVAL.md",
       "---\ntitle: Initial implementation\nfeature_id: example\nwork_plan_id: 001-initial\nschemaVersion: 4\nsequence: 1\nstatus: draft\nreview_status: pending\nlanguage: en\n---\n",
     );
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
 
     await commands["mgood:plan-do"]!("", context(cwd, { select: vi.fn(), input: vi.fn(), notify }));
@@ -428,7 +466,7 @@ describe("plan workflow plugin", () => {
       "work-plans/example/work-plans/001-initial/APPROVAL.md",
       "---\ntitle: Initial implementation\nfeature_id: example\nwork_plan_id: 001-initial\nschemaVersion: 4\nsequence: 1\nstatus: draft\nreview_status: pending\nlanguage: en\n---\n",
     );
-    const { commands, sendUserMessage } = setup();
+    const { commands, sendMessage, sendUserMessage } = setup();
     const notify = vi.fn();
 
     await commands["mgood:plan-do"]!(

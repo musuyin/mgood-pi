@@ -20,7 +20,7 @@ A **Feature** owns the long-lived product goal, cumulative requirements, context
   - `/mgood:plan-do` — select and execute/resume one approved Work Plan;
   - `/mgood:plan-review` — independently review one completed Work Plan and cumulative Feature behavior;
 
-Bundled `create-work-plan`, `execute-work-plan`, and `review-implementation` Markdown remains internal implementation guidance. It is packaged for the Extension to read, but is not registered as a Pi prompt command. The workflow never changes models. Users remain in control through Pi's `/model`.
+Bundled `create-work-plan`, `execute-work-plan`, and `review-implementation` Markdown remains internal implementation guidance. The Extension reads it, injects it as a hidden custom session message that participates in LLM context and triggers the agent turn, and does not register it as a Pi prompt command or display it as user input. The workflow never changes models. Users remain in control through Pi's `/model`.
 
 ## Fixed storage root
 
