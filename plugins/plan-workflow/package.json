@@ -1,7 +1,7 @@
 {
   "name": "@mgood-pi/plugin-plan-workflow",
   "version": "0.2.0",
-  "description": "Interactive bilingual local PLAN.md and REVIEW.md workflow for Pi.",
+  "description": "Interactive local PLAN.md and REVIEW.md workflow for Pi.",
   "type": "module",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",

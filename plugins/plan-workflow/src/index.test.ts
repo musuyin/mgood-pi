@@ -74,7 +74,7 @@ describe("local Plan Workflow plugin", () => {
     const { command, sendMessage } = setup();
     await command(
       `${ROOT}/example`,
-      context(cwd, { select: vi.fn().mockResolvedValue("Continue implementation / 继续实施") }),
+      context(cwd, { select: vi.fn().mockResolvedValue("Continue implementation") }),
     );
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -92,7 +92,7 @@ describe("local Plan Workflow plugin", () => {
     const notify = vi.fn();
     await command(
       `${ROOT}/example`,
-      context(cwd, { select: vi.fn().mockResolvedValue("Read Plan / 阅读计划"), notify }),
+      context(cwd, { select: vi.fn().mockResolvedValue("Read plan"), notify }),
     );
     expect(sendMessage).not.toHaveBeenCalled();
     expect(notify).toHaveBeenCalledWith(expect.stringContaining("# Plan"), "info");

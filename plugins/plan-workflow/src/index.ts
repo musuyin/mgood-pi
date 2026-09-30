@@ -56,7 +56,7 @@ function ready(ctx: ExtensionCommandContext): boolean {
     return false;
   }
   if (!ctx.isIdle()) {
-    notify(ctx, "Agent is busy / Agent 正在运行", "warning");
+    notify(ctx, "Agent is busy.", "warning");
     return false;
   }
   return true;
@@ -65,7 +65,7 @@ function ready(ctx: ExtensionCommandContext): boolean {
 async function readPlan(ctx: ExtensionCommandContext, plan: LocalPlanSummary): Promise<void> {
   notify(
     ctx,
-    `Plan / 计划\n${plan.planPath}\n\n${await readFile(path.resolve(ctx.cwd, plan.planPath), "utf8")}`,
+    `Plan\n${plan.planPath}\n\n${await readFile(path.resolve(ctx.cwd, plan.planPath), "utf8")}`,
   );
 }
 
@@ -73,7 +73,7 @@ async function choosePlan(ctx: ExtensionCommandContext): Promise<LocalPlanSummar
   const plans = await discoverPlans(ctx.cwd);
   if (!plans.length) return null;
   const labels = plans.map(label);
-  const selected = await ctx.ui.select("Select local Plan / 选择本地计划", labels);
+  const selected = await ctx.ui.select("Select local plan", labels);
   return selected ? (plans[labels.indexOf(selected)] ?? null) : null;
 }
 
@@ -82,30 +82,29 @@ async function actOnPlan(
   ctx: ExtensionCommandContext,
   plan: LocalPlanSummary,
 ): Promise<void> {
-  const action = await ctx.ui.select("Plan / 计划", [
-    "Read Plan / 阅读计划",
-    "Continue implementation / 继续实施",
-    "Update Plan / 调整计划",
-    "Run acceptance review / 执行验收",
-    "Discard local Plan / 丢弃本地计划",
+  const action = await ctx.ui.select("Plan", [
+    "Read plan",
+    "Continue implementation",
+    "Update plan",
+    "Run acceptance review",
+    "Discard local plan",
   ]);
-  if (action === "Read Plan / 阅读计划") return readPlan(ctx, plan);
-  if (action === "Continue implementation / 继续实施")
-    return dispatch(pi, "execute", plan.directory);
-  if (action === "Update Plan / 调整计划") {
-    const update = await ctx.ui.input("Plan adjustment / 计划调整");
+  if (action === "Read plan") return readPlan(ctx, plan);
+  if (action === "Continue implementation") return dispatch(pi, "execute", plan.directory);
+  if (action === "Update plan") {
+    const update = await ctx.ui.input("Plan adjustment");
     if (update?.trim()) await dispatch(pi, "plan", `update=${plan.directory} ${update.trim()}`);
     return;
   }
-  if (action === "Run acceptance review / 执行验收") return dispatch(pi, "review", plan.directory);
-  if (action === "Discard local Plan / 丢弃本地计划") {
+  if (action === "Run acceptance review") return dispatch(pi, "review", plan.directory);
+  if (action === "Discard local plan") {
     const confirmed = await ctx.ui.confirm(
-      "Discard local Plan? / 丢弃本地计划？",
+      "Discard local plan?",
       `Delete ${plan.directory}. This only deletes local tmp workflow files.`,
     );
     if (confirmed) {
       await rm(path.resolve(ctx.cwd, plan.directory), { recursive: true, force: false });
-      notify(ctx, "Local Plan discarded / 本地计划已丢弃");
+      notify(ctx, "Local plan discarded");
     }
   }
 }
@@ -120,8 +119,7 @@ export default function registerPlanWorkflow(pi: ExtensionAPI): void {
       return;
     }
     pi.registerCommand(COMMAND, {
-      description:
-        "Create, continue, update, read, or review a local Plan / 创建、继续、调整、阅读或验收本地计划",
+      description: "Create, continue, update, read, or review a local plan",
       handler: async (args, ctx) => {
         if (!ready(ctx)) return;
         const value = args.trim();
@@ -132,7 +130,7 @@ export default function registerPlanWorkflow(pi: ExtensionAPI): void {
         if (value) return dispatch(pi, "plan", `new ${value}`);
         const selected = await choosePlan(ctx);
         if (selected) return actOnPlan(pi, ctx, selected);
-        const request = await ctx.ui.input("Feature request / 功能需求");
+        const request = await ctx.ui.input("Feature request");
         if (request?.trim()) await dispatch(pi, "plan", `new ${request.trim()}`);
       },
     });

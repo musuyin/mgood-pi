@@ -1,13 +1,13 @@
 # @mgood-pi/plugin-git
 
-> **状态：** 此仓库已实现 v7 发布候选；真实 Pi TUI/disposable-repository 验收和独立 Review 尚未完成，发布前不得将其视为已接受。
+> **Status:** This repository contains a v8 release candidate. Real Pi TUI/disposable-repository acceptance and an independent review are incomplete; do not treat it as accepted or released.
 
 Pi extension with three uniform current-Agent Git workflows:
 
 ```text
 /mgood:git-commit [natural-language constraints]
 /mgood:git-commit-push-pr [natural-language constraints]
-/mgood:git-commit-push
+/mgood:git-commit-push [natural-language constraints]
 ```
 
 ## Install and uninstall
