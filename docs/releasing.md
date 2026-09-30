@@ -4,12 +4,12 @@
 
 ## Publishable packages
 
-| Package                          | Role                                                                                                  | User installation                                    |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `@mgood-pi/core`                 | Shared contracts for plugins                                                                          | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-market`        | Curated marketplace and bootstrap preview                                                             | `pi install npm:@mgood-pi/plugin-market`             |
-| `@mgood-pi/plan-workflow-core`   | Plan discovery/parsing implementation                                                                 | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-plan-workflow` | `/mgood:plan-make`, `/mgood:plan-list`, `/mgood:plan-approve`, `/mgood:plan-do`, `/mgood:plan-review` | `pi install npm:@mgood-pi/plugin-plan-workflow`      |
+| Package                          | Role                                      | User installation                                    |
+| -------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| `@mgood-pi/core`                 | Shared contracts for plugins              | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-market`        | Curated marketplace and bootstrap preview | `pi install npm:@mgood-pi/plugin-market`             |
+| `@mgood-pi/plan-workflow-core`   | Plan discovery/parsing implementation     | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-plan-workflow` | TUI-only `/mgood:plan`                    | `pi install npm:@mgood-pi/plugin-plan-workflow`      |
 
 A package is publishable when its `package.json` is not `private`, includes public npm metadata, and has `publishConfig.access: "public"`.
 

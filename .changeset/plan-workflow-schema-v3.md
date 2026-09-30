@@ -3,4 +3,4 @@
 "@mgood-pi/plugin-plan-workflow": major
 ---
 
-Adopt the breaking Schema v4 Feature, Work Plan Approval, Phase, and immutable Review workflow under the fixed `work-plans` root. Expose `/mgood:plan-make`, `/mgood:plan-list`, `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review`; internal planning/execution/review guidance is not registered as prompt commands. Add remediation planning, safe manual/direct selectors, separate execution and review states, explicit approval audit fields, and approved-draft supersession of eligible same-Feature Plans with preserved history.
+Replace the repository-managed workflow with breaking Schema v5 local Plan Workflow. Expose only TUI-only `/mgood:plan`; store mutable local state solely in `tmp/work-plans/<feature>/{PLAN.md,REVIEW.md}`. Remove Work Plans, phases, approvals, supersession, immutable remediation reviews, and all runtime scanning of repository-root `work-plans/`. Internal guidance remains hidden custom session context rather than public prompt commands.

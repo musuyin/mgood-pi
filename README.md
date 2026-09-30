@@ -9,19 +9,19 @@ A composable plugin kit for a better [Pi](https://pi.dev) coding-agent experienc
 The repository is initialized as an npm-workspace TypeScript monorepo. Current user-facing capabilities are:
 
 - `@mgood-pi/plugin-market` — `/mgood:init` previews the planned project bootstrap layout, and `/mgood:market` safely installs a selected curated plugin after explicit confirmation.
-- `@mgood-pi/plugin-plan-workflow` — bilingual `/mgood:plan-make`, read-only `/mgood:plan-list`, TUI-only `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review` for a durable Feature → Work Plan → Phase → Review loop. Model selection remains explicit through Pi's built-in `/model` command.
-- `@mgood-pi/plugin-git` — 实施中的 v9 `/mgood:git-commit [constraints]` 在空闲 TUI 向当前 Agent 注入 `display: false` 的 `mgood-git-commit` custom message；仅在 clean index 的纯未暂存/未跟踪 whole-file 变更中，Agent 可按功能尽力分组并以 exact paths 提交，成功仅显示 short SHA/message。尽力不要求绝对语义证明但避开明显无关文件；源码、Markdown、配置、lockfile 和常规项目 PNG 等资源可按合理功能关系共同分组，PNG 不会仅因二进制属性停止；staged/mixed 与风险状态仍停止，ambiguous remainder 保留并报告而不创建默认收尾 commit。隐藏仅抑制 TUI transcript：内容仍进 Agent context且可能留在本地 session/export，不是 secret 或 sandbox，也从不自动 push。严格无参数的 `/mgood:git-push` 仍独立预览、确认并以精确 refspec 推送当前分支至已配置 upstream。真实 Pi TUI/disposable-repository 验收尚未记录，发布前不可将其视为完成。参见[安全 Git 功能文档](./docs/features/git/README.md)。
+- `@mgood-pi/plugin-plan-workflow` — bilingual TUI-only `/mgood:plan` for lightweight local plans under `tmp/work-plans/`, with one living `PLAN.md` and append-only `REVIEW.md`. Model selection remains explicit through Pi's built-in `/model` command.
+- `@mgood-pi/plugin-git` — 实施中的统一三命令：`/mgood:git-commit [constraints]` 只安全提交；`/mgood:git-commit-push [constraints]` 经明确确认后执行 feature-branch commit + push；`/mgood:git-commit-push-pr [constraints]` 在此基础上创建 PR。两个 push-capable workflow 绝不 push 至 `main`/`master`/`dev`/`develop`，并禁止 force/rewrite。真实 Pi TUI/disposable-repository 验收尚未记录，发布前不可将其视为完成。参见[安全 Git 功能文档](./docs/features/git/README.md)。
 
 ## Layout
 
 - `packages/core` — framework-neutral contracts shared by plugins.
-- `packages/plan-workflow` — framework-neutral Schema v4 Feature, canonical Work Plan Approval, Phase, and Review discovery.
+- `packages/plan-workflow` — framework-neutral Schema v5 local `PLAN.md` and `REVIEW.md` discovery.
 - `packages/git` — framework-neutral configured-upstream push safety core 和 bounded Git executor；commit 工作流由插件私有 Prompt 委托给当前 Agent。
 - `plugins/plan-workflow` — interactive Plan Workflow adapter and bundled prompts.
-- `plugins/git` — TUI-only current-Agent commit Prompt launcher and independently confirmed configured-upstream push adapter。
+- `plugins/git` — TUI-only current-Agent launchers for commit, confirmed commit-push, and confirmed commit-push-PR。
 - `plugins/market` — Pi extension adapter for `/mgood:init` and `/mgood:market`.
 - `docs/features` — maintained wiki-style documentation owned by each implemented feature, including clearly marked planned features.
-- `work-plans` — committed, upload-friendly Schema v4 Feature, Work Plan Approval, and Review data.
+- `tmp/work-plans` — local, user-managed Plan and Review workbench state; it is normally ignored rather than committed.
 - Future plugins and packages follow the boundaries defined in [`AGENTS.md`](./AGENTS.md).
 
 ## Prerequisites
@@ -49,22 +49,15 @@ Try the Plan Workflow package for one Pi run:
 pi -e ./plugins/plan-workflow
 ```
 
-Then select models explicitly and use the bilingual planning loop:
+Then select a model explicitly and start or resume a local plan:
 
 ```text
 /model
-/mgood:plan-make 添加可恢复操作
-/model
-/mgood:plan-list
-/mgood:plan-approve
-/model
-/mgood:plan-do
-/model
-/mgood:plan-review
-/mgood:plan-list
+/mgood:plan 添加可恢复操作
+/mgood:plan tmp/work-plans/<feature>
 ```
 
-All workflow data lives under the single committed root `work-plans/`. Each Work Plan has one canonical `APPROVAL.md`; `/mgood:plan-list` reports state and reads the complete approval brief without a model turn, while TUI-only `/mgood:plan-approve` is the explicit `draft` → `approved` transition. A new draft may declare a same-Feature Plan that it supersedes; only approving the new Plan makes that replacement effective and preserves the old Plan as history. `/mgood:plan-do` and `/mgood:plan-review` select one Work Plan; phases/checklists advance internally. A `changes-required` Review can seed another Work Plan through `/mgood:plan-make` without mutating the old report.
+Local workflow data lives only under `tmp/work-plans/`. Each feature has a living `PLAN.md` and an append-only `REVIEW.md`. `/mgood:plan` provides read, continue, in-place adjustment, acceptance review, and explicit local discard actions. Small changes remain in the same Plan; a review with `changes-needed` returns focused work to that Plan. The plugin never edits `.gitignore`; users decide whether `tmp/` is ignored or retained.
 
 See the [Plan Workflow feature wiki](./docs/features/plan-workflow/README.md) for its package contract, safety rules, and operation guide.
 
@@ -83,8 +76,8 @@ The package manifests declare their extensions through `pi` fields. Plan Workflo
 ## Security and data handling
 
 - `/mgood:init` has no network, subprocess, Git, or persistent-storage behavior. `/mgood:market` starts `pi install` only after the user explicitly selects a curated entry and confirms its exact source and scope; it never runs a shell command or installs arbitrary user-provided sources.
-- Plan Workflow's extension reads fixed-root Schema v4 metadata and dispatches bundled internal guidance for the selected Work Plan. `/mgood:plan-make` writes planning Markdown and can record replacement intent, TUI-only `/mgood:plan-approve` explicitly authorizes a draft Plan, records its audit fields, and makes any eligible declared supersession effective; `/mgood:plan-do` executes an approved Plan and its ordered phases, `/mgood:plan-review` writes an immutable Review without fixing implementation, and `/mgood:plan-list` is read-only and can read approval details. Prompt-guided model actions are not an OS sandbox.
-- 实施中的 `/mgood:git-commit` 仅在 idle TUI 中加载 Prompt，并以 `display: false` 的 `mgood-git-commit` custom message 向当前 Agent 触发一轮执行；调用本身授权 Agent 在 current worktree 静默检查。只有 clean index 的纯 unstaged/untracked whole-file 候选可尽力按功能 exact-path 提交；源码、Markdown、配置、lockfile 和常规项目 PNG 等资源可按合理功能关系共同分组，PNG 不会仅因二进制属性停止；它不保证绝对语义精确、也不包含明显无关文件，ambiguous remainder 保留并报告而非默认收尾。隐藏只影响 TUI transcript，内容仍进入 LLM context且可能留在 local session/export；并非 secret、非持久通道或 sandbox。handler 不检查 Git、不调用第二个 provider、不显示插件确认、也不直接 stage/commit/push；Prompt 禁止 broad/destructive Git、历史改写和自动 push，且 staged/mixed/风险状态、drift/hook/partial failure 时停止。严格无参数 `/mgood:git-push` 继续由 core 以 direct Git argv、explicit cwd、disabled terminal credential prompts、time/output bounds、idempotent terminal cleanup、redacted diagnostics 和 raw remote identity 内部 fingerprint 实施独立确认/复验。hooks、helpers、transport 和 server policy 不在边界内。见 [Git command contract](./docs/plugin-contracts/git-commands.md) 与 [security review](./docs/security/git-commands.md)。
+- Plan Workflow's extension reads fixed-root Schema v5 local-plan metadata and dispatches bundled internal guidance as hidden custom session messages. TUI-only `/mgood:plan` creates, reads, continues, adjusts, reviews, or explicitly discards local `tmp/work-plans/` state. It does not modify `.gitignore`, Git state, or formal project documentation automatically. Prompt-guided model actions are not an OS sandbox.
+- 实施中的 Git 命令统一以 current-Agent hidden Prompt 启动：`/mgood:git-commit` 只提交；`/mgood:git-commit-push` 在 TUI 确认后提交并只推送 non-protected feature branch；`/mgood:git-commit-push-pr` 在相同边界下再执行 `gh pr create`。若 push-capable workflow 从 `main`/`master`/`dev`/`develop`（大小写不敏感）启动，则在 read-only preflight 成功后 Agent 必须自动以 `git switch -c <branch>` 创建并切换 descriptive feature branch，再开始 staging、commit 或 push；不会要求用户自行 checkout。两个 workflow 均禁止 protected destination、force、配置改写与历史重写。隐藏只影响 TUI transcript，内容仍进入 LLM context 且可能留在 local session/export；它们是行为协议而非 sandbox。`packages/git` 继续提供采用 direct Git argv、explicit cwd、disabled terminal credential prompts、time/output bounds、redacted diagnostics 与 raw remote identity fingerprint 的独立 configured-upstream push core，但插件不再把该 core 暴露为 slash command。hooks、helpers、transport 和 server policy 不在边界内。见 [Git command contract](./docs/plugin-contracts/git-commands.md) 与 [security review](./docs/security/git-commands.md)。
 - Future MCP, skill, and memory features must follow the approval, redaction, and user-control rules in [`AGENTS.md`](./AGENTS.md).
 - Local Pi runtime state and future local memory database/index files are ignored by Git via [`.gitignore`](./.gitignore).
 

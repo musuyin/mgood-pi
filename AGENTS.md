@@ -16,7 +16,7 @@ Build a composable, independently installable plugin kit that improves the **Pi 
 - MCP integration: connection lifecycle, tool/resource exposure, configuration UX, health checks, and permission boundaries.
 - Git workflow: worktree/session awareness, checkpoints, safe review/commit/restore flows, and repository status UI.
 - Durable project/user memory: explicit long-term notes, metadata storage, retrieval tools, optional local RAG indexing, import/export, and user control.
-- Reusable prompt workflows, including Plan Workflow's `/mgood:plan-make`, read-only `/mgood:plan-list`, TUI-only `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review` experiences.
+- Reusable prompt workflows, including Plan Workflow's TUI-only `/mgood:plan` experience for local plan, implementation, and review actions.
 
 ### Explicitly out of scope
 
@@ -67,20 +67,20 @@ This is a TypeScript npm-workspaces monorepo. Keep the current layout accurate i
 ├── package.json / package-lock.json   # private workspace root and lockfile
 ├── packages/
 │   ├── core/                          # shared framework-neutral contracts
-│   └── plan-workflow/                 # Schema v4 Feature/Work Plan/Review discovery
+│   └── plan-workflow/                 # Schema v5 local PLAN/REVIEW discovery
 ├── plugins/
 │   ├── market/                        # /mgood:market and /mgood:init
-│   └── plan-workflow/                 # /mgood:plan-make, :plan-list, :plan-approve, :plan-do, :plan-review; private bundled guidance
+│   └── plan-workflow/                 # /mgood:plan; private bundled local-plan guidance
 ├── docs/
 │   ├── adr/                           # architecture decision records
 │   ├── features/                      # maintained implementation documentation
 │   └── releasing.md                   # independent npm release process
-├── work-plans/                        # committed Schema v4 Feature/Work Plan/Review data
+├── tmp/work-plans/                    # user-managed local Schema v5 PLAN/REVIEW temporary data
 ├── .changeset/                        # independent package release intents
 └── .github/workflows/release.yml      # validation, Version Packages PR, publishing
 ```
 
-Plan Workflow discovers shared workflow data only from the repository-root `work-plans/` directory. Do not add a branded alias, configurable root, or recursive search for other same-named directories.
+Plan Workflow discovers local workflow data only from `tmp/work-plans/`. Do not add a branded alias, configurable root, recursive search, or compatibility scan of repository-root `work-plans/`.
 
 Add folders only when their first real package or documented responsibility exists. Future `packages/ui`, `packages/skillset`, `packages/mcp`, `packages/git`, `packages/memory`, matching plugins, `skills/`, `prompts/`, `themes/`, `services/`, `examples/`, and `scripts/` follow these same boundaries.
 
@@ -91,7 +91,7 @@ Add folders only when their first real package or documented responsibility exis
 - A plugin may depend on `packages/*`; packages must never depend on a plugin.
 - Avoid a god-plugin. Prefer independently installable feature packages and optional curated bundle/meta-packages.
 - Every distributable package needs an explicit `pi` manifest as applicable, license, supported Pi/Node versions, README, changelog, package file allowlist, and public npm metadata.
-- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, `/mgood:plan-make`, `/mgood:plan-list`, `/mgood:plan-approve`, `/mgood:plan-do`, and `/mgood:plan-review`. Do not shadow Pi built-ins.
+- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, and `/mgood:plan`. Do not shadow Pi built-ins.
 - Extension factories must not start timers, watchers, processes, or network connections. Start session-scoped resources in `session_start` or lazily; close them in an idempotent `session_shutdown` handler.
 
 ### Plugin Market contract
