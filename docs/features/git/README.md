@@ -36,13 +36,13 @@ Prompt 要求当前 Agent 复用已有对话上下文和标准 tools，只在 in
 
 ### Commit-push-PR：确认后的 feature-branch 快捷 workflow
 
-`/mgood:git-commit-push-pr [constraints]` 在 idle TUI 中先显示一次明确 confirmation；接受后才向 current Agent 注入隐藏 Prompt。它把用户已确认的操作限制为：安全检查、必要时建立 descriptive feature branch、exact-path commit、仅推送该 feature branch、最后运行 `gh pr create`。如果当前分支受保护，read-only preflight 成功后 Agent 必须自动以 `git switch -c <branch>` 创建并切换到该 feature branch，且发生在 staging、commit 和 push 前；不会要求用户自行 checkout。它不 force push、merge、改 Git config、改写历史、自动 rollback/retry。
+`/mgood:git-commit-push-pr [constraints]` 在 idle TUI 中先显示一次明确 confirmation；接受后才向 current Agent 注入隐藏 Prompt。它把用户已确认的操作限制为：安全检查、必要时建立 descriptive feature branch、exact-path commit、仅推送该 feature branch、最后运行 `gh pr create`。如果当前分支受保护，read-only preflight 成功后 Agent 必须先检查既有 branch 命名惯例和实现范围，再自动以 `git switch -c <branch>` 创建并切换到有意义、未被使用的 feature branch，且发生在 staging、commit 和 push 前；不会要求用户自行 checkout。没有明确惯例时使用 `<type>/<short-lowercase-kebab-case-summary>`，例如 `feat/git-commit-workflow`，而非日期、随机 ID 或泛化占位名。它不 force push、merge、改 Git config、改写历史、自动 rollback/retry。
 
 Push destination 不得为 `main`、`master`、`dev` 或 `develop`（大小写不敏感）。如果从这些分支开始，Prompt 必须先 `git switch -c <branch>`；protected branch 可以作为 PR base，但绝不能是 push target。GitHub CLI auth/access 或 PR failure 时停止并报告，绝不继续执行其他 GitHub mutation。
 
 ### Commit-push：确认后的 feature-branch workflow
 
-`/mgood:git-commit-push [constraints]` 统一为 current-Agent commit-and-push launcher。它在 idle TUI 中显示一次明确 confirmation，接受后注入隐藏 Prompt；Prompt 依次检查安全状态、必要时建立 descriptive feature branch、以 exact paths 创建 Conventional Commits，再仅 push 该 feature branch。如果当前分支受保护，read-only preflight 成功后 Agent 必须自动以 `git switch -c <branch>` 创建并切换到该 feature branch，且发生在 staging、commit 和 push 前；不会要求用户自行 checkout。它不 force、push tag/delete、改 Git config、fetch/pull/retry、改写历史或自动 rollback/retry。
+`/mgood:git-commit-push [constraints]` 统一为 current-Agent commit-and-push launcher。它在 idle TUI 中显示一次明确 confirmation，接受后注入隐藏 Prompt；Prompt 依次检查安全状态、必要时建立 descriptive feature branch、以 exact paths 创建 Conventional Commits，再仅 push 该 feature branch。如果当前分支受保护，read-only preflight 成功后 Agent 必须先检查既有 branch 命名惯例和实现范围，再自动以 `git switch -c <branch>` 创建并切换到有意义、未被使用的 feature branch，且发生在 staging、commit 和 push 前；不会要求用户自行 checkout。没有明确惯例时使用 `<type>/<short-lowercase-kebab-case-summary>`，例如 `feat/git-commit-workflow`，而非日期、随机 ID 或泛化占位名。它不 force、push tag/delete、改 Git config、fetch/pull/retry、改写历史或自动 rollback/retry。
 
 Push destination 不得为 `main`、`master`、`dev` 或 `develop`（大小写不敏感）。从这些分支开始时必须先 `git switch -c <branch>`。这是 Agent 行为合同，不是 server sandbox。`@mgood-pi/git` 的 standalone configured-upstream core 继续保留 argv、explicit cwd、`GIT_TERMINAL_PROMPT=0`、timeout/output limit、credential-redacted diagnostics 与 protected destination rejection，但不再由插件 slash command 直接调用。
 

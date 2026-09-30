@@ -36,11 +36,11 @@ This is a behavioral protocol, **not a capability sandbox**: Pi tools, shells, h
 
 ## `/mgood:git-commit-push`: confirmed commit-and-push workflow
 
-This command now has the same current-Agent workflow model as commit and commit-push-PR. It accepts optional natural-language constraints, asks for one explicit TUI confirmation, then injects a hidden Prompt that performs: inspect → if currently protected, automatically `git switch -c` a descriptive feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch. It must never push to `main`, `master`, `dev`, or `develop` (case-insensitive), force-push, change Git configuration, push tags, delete refs, or rewrite history.
+This command now has the same current-Agent workflow model as commit and commit-push-PR. It accepts optional natural-language constraints, asks for one explicit TUI confirmation, then injects a hidden Prompt that performs: inspect → if currently protected, inspect local naming conventions and implementation scope, then automatically `git switch -c` a meaningful unused feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch. It must never push to `main`, `master`, `dev`, or `develop` (case-insensitive), force-push, change Git configuration, push tags, delete refs, or rewrite history.
 
 ## `/mgood:git-commit-push-pr`: confirmed feature-branch workflow
 
-This workflow uses the same confirmation and safe commit/push boundary as `/mgood:git-commit-push`, then creates one pull request with `gh pr create`. The sequence is: inspect → if currently protected, automatically `git switch -c` a descriptive feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch → `gh pr create`. Protected branches can be PR bases but never push destinations. It stops on unsafe repository state, push failure, or PR failure and never force-pushes, merges, or rewrites history.
+This workflow uses the same confirmation and safe commit/push boundary as `/mgood:git-commit-push`, then creates one pull request with `gh pr create`. The sequence is: inspect → if currently protected, inspect local naming conventions and implementation scope, then automatically `git switch -c` a meaningful unused feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch → `gh pr create`. Protected branches can be PR bases but never push destinations. It stops on unsafe repository state, push failure, or PR failure and never force-pushes, merges, or rewrites history.
 
 ## Non-interactive behavior and recovery
 

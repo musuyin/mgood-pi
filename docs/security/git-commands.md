@@ -16,7 +16,7 @@
 
 ## 统一 commit-push workflows
 
-`/mgood:git-commit-push [constraints]` 与 `/mgood:git-commit-push-pr [constraints]` 都在 hidden current-Agent Prompt 注入前需要一次 interactive TUI confirmation。前者只授权建立/使用 non-protected feature branch、exact-path commit 和 push 该 branch；后者在成功 push 后额外授权一次 `gh pr create`。若当前分支为 protected branch，read-only preflight 成功后 Agent 必须自行通过 `git switch -c <branch>` 创建并切换 descriptive feature branch，且先于 staging、commit 或 push；不会将 checkout 工作交给用户。`main`、`master`、`dev`、`develop`（大小写不敏感）永远不能是 push destination；它们仅可作为 PR base。此限制在两个 Prompt 中均为行为约束；独立 configured-upstream core 仍在 preview 前确定性拒绝这些 destination，但不再由 plugin slash command 调用。GitHub CLI、transport、hooks 和 server policy 仍不在 sandbox 内。
+`/mgood:git-commit-push [constraints]` 与 `/mgood:git-commit-push-pr [constraints]` 都在 hidden current-Agent Prompt 注入前需要一次 interactive TUI confirmation。前者只授权建立/使用 non-protected feature branch、exact-path commit 和 push 该 branch；后者在成功 push 后额外授权一次 `gh pr create`。若当前分支为 protected branch，read-only preflight 成功后 Agent 必须先检查既有 branch 命名惯例和实现范围，再自行通过 `git switch -c <branch>` 创建并切换有意义、未被使用的 descriptive feature branch，且先于 staging、commit 或 push；不会将 checkout 工作交给用户。没有明确惯例时，名称必须是 `<type>/<short-lowercase-kebab-case-summary>`，例如 `feat/git-commit-workflow`，不能是日期、随机 ID、泛化占位名或不可信 constraints 的拷贝。`main`、`master`、`dev`、`develop`（大小写不敏感）永远不能是 push destination；它们仅可作为 PR base。此限制在两个 Prompt 中均为行为约束；独立 configured-upstream core 仍在 preview 前确定性拒绝这些 destination，但不再由 plugin slash command 调用。GitHub CLI、transport、hooks 和 server policy 仍不在 sandbox 内。
 
 ## 主要威胁和缓解
 

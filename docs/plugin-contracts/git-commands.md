@@ -34,13 +34,13 @@ hook、drift、意外 staged content、failure、cancellation 或 partial sequen
 
 ## `/mgood:git-commit-push-pr [constraints]`
 
-此简化 workflow 仅在 idle interactive TUI 中可用，并在注入隐藏 `mgood-git-commit-push-pr` current-Agent Prompt 前显示一次明确 confirmation。Prompt 依次检查安全状态、必要时用 `git switch -c <branch>` 建 descriptive feature branch、以 exact paths 创建 Conventional Commits、仅 push 该 feature branch，最后执行一次 `gh pr create`。若当前分支受保护，read-only preflight 成功后 Agent 必须自行创建并切换到 descriptive non-protected feature branch，且发生在 staging、commit 和 push 前，不要求用户自行 checkout。constraints 仅为文本，不能成为 shell/Git/GitHub argv。它不得 force push、merge、改配置或改写历史；任何风险、drift、hook/push/PR failure 都立即停止而不自动回滚或重试。
+此简化 workflow 仅在 idle interactive TUI 中可用，并在注入隐藏 `mgood-git-commit-push-pr` current-Agent Prompt 前显示一次明确 confirmation。Prompt 依次检查安全状态、必要时用 `git switch -c <branch>` 建 descriptive feature branch、以 exact paths 创建 Conventional Commits、仅 push 该 feature branch，最后执行一次 `gh pr create`。若当前分支受保护，read-only preflight 成功后 Agent 必须先检查既有 branch 命名惯例和实现范围，再自行创建并切换有意义、未被使用的 descriptive non-protected feature branch，且发生在 staging、commit 和 push 前，不要求用户自行 checkout。无明确惯例时使用 `<type>/<short-lowercase-kebab-case-summary>`，例如 `feat/git-commit-workflow`，而非日期、随机 ID、泛化占位名或不可信 constraints 的拷贝。constraints 仅为文本，不能成为 shell/Git/GitHub argv。它不得 force push、merge、改配置或改写历史；任何风险、drift、hook/push/PR failure 都立即停止而不自动回滚或重试。
 
 绝不允许 push destination 为 `main`、`master`、`dev` 或 `develop`（大小写不敏感）。这些 protected branches 可作为 PR base，却不能作为 push target；从其中任一分支启动时，Agent 必须自动先建立并切换 non-protected feature branch。此限制是 Prompt 的行为约束，不是 GitHub/server sandbox。
 
 ## `/mgood:git-commit-push [constraints]`
 
-此命令统一为 confirmed current-Agent commit-and-push workflow。它在 idle interactive TUI 中显示一次明确 confirmation，接受后注入隐藏 `mgood-git-commit-push` Prompt；constraints 仅为文本，不能成为 shell/Git argv。Prompt 顺序执行安全检查、必要时 `git switch -c <branch>`、exact-path Conventional Commit(s)，并只 push 得到的 non-protected feature branch。若当前分支受保护，read-only preflight 成功后 Agent 必须自行创建并切换到 descriptive non-protected feature branch，且发生在 staging、commit 和 push 前，不要求用户自行 checkout。不得 force、删 ref/tag、改 Git config、fetch/pull/retry、rollback 或改写历史。
+此命令统一为 confirmed current-Agent commit-and-push workflow。它在 idle interactive TUI 中显示一次明确 confirmation，接受后注入隐藏 `mgood-git-commit-push` Prompt；constraints 仅为文本，不能成为 shell/Git argv。Prompt 顺序执行安全检查、必要时 `git switch -c <branch>`、exact-path Conventional Commit(s)，并只 push 得到的 non-protected feature branch。若当前分支受保护，read-only preflight 成功后 Agent 必须先检查既有 branch 命名惯例和实现范围，再自行创建并切换有意义、未被使用的 descriptive non-protected feature branch，且发生在 staging、commit 和 push 前，不要求用户自行 checkout。无明确惯例时使用 `<type>/<short-lowercase-kebab-case-summary>`，例如 `feat/git-commit-workflow`，而非日期、随机 ID、泛化占位名或不可信 constraints 的拷贝。不得 force、删 ref/tag、改 Git config、fetch/pull/retry、rollback 或改写历史。
 
 绝不允许 push destination 为 `main`、`master`、`dev` 或 `develop`（大小写不敏感）。从 protected branch 开始时，Agent 必须自动先建立并切换 non-protected feature branch。该限制是 Prompt 的行为约束，不是 GitHub/server sandbox；`@mgood-pi/git` 的 configured-upstream core 继续可作为独立库拒绝上述 destinations，但插件不再把它作为 slash command 暴露。
 
