@@ -2,41 +2,16 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import type { PreparedPush, PushPreview } from "@mgood-pi/git";
 import { describe, expect, it, vi } from "vitest";
 
-import { createCommitHandler, createPushHandler, type GitCore } from "./commands.js";
+import {
+  createCommitHandler,
+  createCommitPushHandler,
+  createCommitPushPrHandler,
+} from "./commands.js";
 import registerGitPlugin from "./index.js";
 
 const promptPath = fileURLToPath(new URL("../prompts/agent-commit.md", import.meta.url));
-
-const pushPreview = {
-  kind: "push",
-  repositoryRoot: "/repo",
-  remote: "local",
-  remoteUrl: "/remote",
-  localBranch: "main",
-  localRef: "refs/heads/main",
-  destinationRef: "refs/heads/main",
-  head: "a".repeat(40),
-  refspec: "refs/heads/main:refs/heads/main",
-  transferSummary: "unknown",
-  warning: "warning",
-} satisfies PushPreview;
-
-function core(): GitCore {
-  return {
-    preparePush: vi.fn().mockResolvedValue({
-      kind: "push",
-      repositoryRoot: "/repo",
-      remote: "local",
-      refspec: "refs/heads/main:refs/heads/main",
-      fingerprint: "f",
-      preview: pushPreview,
-    } satisfies PreparedPush),
-    executePush: vi.fn().mockResolvedValue({ kind: "push", summary: "done" }),
-  };
-}
 
 function context(
   options: {
@@ -57,13 +32,14 @@ function context(
 }
 
 describe("Git plugin", () => {
-  it("registers only the two namespaced commands without startup effects", () => {
+  it("registers the three namespaced commands without startup effects", () => {
     const registerCommand = vi.fn();
     const sendMessage = vi.fn();
     registerGitPlugin({ registerCommand, sendMessage } as never);
     expect(registerCommand.mock.calls.map(([name]) => name)).toEqual([
       "mgood:git-commit",
-      "mgood:git-push",
+      "mgood:git-commit-push-pr",
+      "mgood:git-commit-push",
     ]);
     expect(sendMessage).not.toHaveBeenCalled();
   });
@@ -90,10 +66,13 @@ describe("Git plugin", () => {
     expect(prompt).toContain("Do not stop merely because a conventional project PNG is binary");
     expect(prompt).toContain("source, Markdown, configuration, lockfile");
     expect(prompt).toContain("submodule/nested repository");
-    expect(prompt).toContain("hunk splitting to avoid mixing unrelated changes");
+    expect(prompt).toContain(
+      "path whose unrelated changes would require hunk splitting is not a repository-wide stop",
+    );
+    expect(prompt).toContain("continue only with independently classifiable whole-file groups");
     expect(prompt).toContain("Absolute semantic proof is not required");
     expect(prompt).toContain("do not create a default `chore` or consolidate-remainder commit");
-    expect(prompt).toContain("leave them uncommitted");
+    expect(prompt).toContain("leave only those paths uncommitted");
     expect(prompt).toContain("Never reset or rebuild the index");
     expect(prompt).toContain("Never push automatically");
     expect(prompt).toContain("behavioral instruction, not a core-enforced capability sandbox");
@@ -176,16 +155,80 @@ describe("Git plugin", () => {
     );
   });
 
-  it("rejects non-empty push arguments before preparation", async () => {
-    const value = core();
-    await createPushHandler(value)("--force", context());
-    expect(value.preparePush).not.toHaveBeenCalled();
+  it("requires confirmation before injecting the commit-push-pr Prompt", async () => {
+    const sendMessage = vi.fn();
+    const ctx = context({ confirmed: true });
+    const readPrompt = vi.fn().mockResolvedValue("---\nprivate: true\n---\nconstraints: $@");
+    await createCommitPushPrHandler({ sendMessage }, readPrompt)("create a PR", ctx);
+    expect(ctx.ui.confirm).toHaveBeenCalledOnce();
+    expect(sendMessage).toHaveBeenCalledExactlyOnceWith(
+      {
+        customType: "mgood-git-commit-push-pr",
+        content: "constraints: create a PR",
+        display: false,
+      },
+      { triggerTurn: true },
+    );
   });
 
-  it("keeps push confirmation and execution independent from the commit Prompt", async () => {
-    const value = core();
-    await createPushHandler(value)("", context());
-    expect(value.preparePush).toHaveBeenCalledWith("/repo");
-    expect(value.executePush).toHaveBeenCalledOnce();
+  it("does not inject the commit-push-pr Prompt when confirmation is declined", async () => {
+    const sendMessage = vi.fn();
+    const readPrompt = vi.fn();
+    await createCommitPushPrHandler({ sendMessage }, readPrompt)("", context({ confirmed: false }));
+    expect(readPrompt).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("keeps the commit-push-pr Prompt off protected push destinations", async () => {
+    const prompt = await readFile(
+      fileURLToPath(new URL("../prompts/agent-commit-push-pr.md", import.meta.url)),
+      "utf8",
+    );
+    expect(prompt).toContain("`main`, `master`, `dev`, or `develop`");
+    expect(prompt).toContain("must automatically create and switch");
+    expect(prompt).toContain("git switch -c <branch>");
+    expect(prompt).toContain("before staging, committing, or pushing");
+    expect(prompt).toContain("gh pr create");
+    expect(prompt).toContain("Do not force push");
+    expect(prompt).toContain("not a repository-wide stop");
+    expect(prompt).toContain("Commit every independently classifiable group");
+  });
+
+  it("requires confirmation before injecting the commit-push Prompt", async () => {
+    const sendMessage = vi.fn();
+    const ctx = context({ confirmed: true });
+    const readPrompt = vi.fn().mockResolvedValue("---\nprivate: true\n---\nconstraints: $@");
+    await createCommitPushHandler({ sendMessage }, readPrompt)("ship the change", ctx);
+    expect(ctx.ui.confirm).toHaveBeenCalledOnce();
+    expect(sendMessage).toHaveBeenCalledExactlyOnceWith(
+      {
+        customType: "mgood-git-commit-push",
+        content: "constraints: ship the change",
+        display: false,
+      },
+      { triggerTurn: true },
+    );
+  });
+
+  it("does not inject the commit-push Prompt when confirmation is declined", async () => {
+    const sendMessage = vi.fn();
+    const readPrompt = vi.fn();
+    await createCommitPushHandler({ sendMessage }, readPrompt)("", context({ confirmed: false }));
+    expect(readPrompt).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("keeps the commit-push Prompt off protected push destinations", async () => {
+    const prompt = await readFile(
+      fileURLToPath(new URL("../prompts/agent-commit-push.md", import.meta.url)),
+      "utf8",
+    );
+    expect(prompt).toContain("`main`, `master`, `dev`, or `develop`");
+    expect(prompt).toContain("must automatically create and switch");
+    expect(prompt).toContain("git switch -c <branch>");
+    expect(prompt).toContain("before staging, committing, or pushing");
+    expect(prompt).toContain("Do not force push");
+    expect(prompt).toContain("not a repository-wide stop");
+    expect(prompt).toContain("Commit every independently classifiable group");
   });
 });

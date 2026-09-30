@@ -62,16 +62,35 @@ describe("prepared configured-upstream push", () => {
     await runGit(remote, ["init", "--bare"]);
     await runGit(repository, ["remote", "add", "upstream-test", remote]);
     await runGit(repository, ["config", "branch.main.remote", "upstream-test"]);
-    await runGit(repository, ["config", "branch.main.merge", "refs/heads/main"]);
+    await runGit(repository, ["config", "branch.main.merge", "refs/heads/feature-test"]);
     const executor = new SpawnGitExecutor();
 
     const prepared = await preparePush(executor, repository);
     expect(prepared.preview.remote).toBe("upstream-test");
-    expect(prepared.preview.refspec).toBe("refs/heads/main:refs/heads/main");
+    expect(prepared.preview.refspec).toBe("refs/heads/main:refs/heads/feature-test");
     await executePush(executor, prepared);
 
-    expect(await runGit(remote, ["rev-parse", "refs/heads/main"])).toMatch(/^[0-9a-f]{40}$/u);
+    expect(await runGit(remote, ["rev-parse", "refs/heads/feature-test"])).toMatch(
+      /^[0-9a-f]{40}$/u,
+    );
   });
+
+  it.each(["main", "master", "dev", "develop"])(
+    "refuses configured upstream pushes to protected branch %s",
+    async (branch) => {
+      const repository = await createRepository();
+      const remote = await temporaryDirectory("mgood-pi-remote-");
+      await runGit(remote, ["init", "--bare"]);
+      await runGit(repository, ["remote", "add", "upstream-test", remote]);
+      await runGit(repository, ["config", "branch.main.remote", "upstream-test"]);
+      await runGit(repository, ["config", "branch.main.merge", `refs/heads/${branch}`]);
+
+      await expect(preparePush(new SpawnGitExecutor(), repository)).rejects.toMatchObject({
+        code: "policy-rejected",
+      });
+      await expect(runGit(remote, ["rev-parse", `refs/heads/${branch}`])).rejects.toThrow();
+    },
+  );
 
   it("does not push when upstream target drifts after preview", async () => {
     const repository = await createRepository();
@@ -79,13 +98,13 @@ describe("prepared configured-upstream push", () => {
     await runGit(remote, ["init", "--bare"]);
     await runGit(repository, ["remote", "add", "upstream-test", remote]);
     await runGit(repository, ["config", "branch.main.remote", "upstream-test"]);
-    await runGit(repository, ["config", "branch.main.merge", "refs/heads/main"]);
+    await runGit(repository, ["config", "branch.main.merge", "refs/heads/feature-test"]);
     const executor = new SpawnGitExecutor();
     const prepared = await preparePush(executor, repository);
     await runGit(repository, ["config", "branch.main.merge", "refs/heads/other"]);
 
     await expect(executePush(executor, prepared)).rejects.toMatchObject({ code: "state-drift" });
-    await expect(runGit(remote, ["rev-parse", "refs/heads/main"])).rejects.toThrow();
+    await expect(runGit(remote, ["rev-parse", "refs/heads/feature-test"])).rejects.toThrow();
   });
 
   it("rejects credential-only remote URL drift without exposing credentials or pushing", async () => {
@@ -97,7 +116,7 @@ describe("prepared configured-upstream push", () => {
       "https://alice:one@example.test/repo.git/",
     ]);
     await runGit(repository, ["config", "branch.main.remote", "upstream-test"]);
-    await runGit(repository, ["config", "branch.main.merge", "refs/heads/main"]);
+    await runGit(repository, ["config", "branch.main.merge", "refs/heads/feature-test"]);
     const executor = new SpawnGitExecutor();
     const prepared = await preparePush(executor, repository);
     await runGit(repository, [

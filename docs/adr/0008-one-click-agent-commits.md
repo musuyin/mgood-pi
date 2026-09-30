@@ -31,4 +31,4 @@ Existing staged or mixed staged/unstaged states are a safety gate: if the Agent 
 - The command is faster and quieter but grants Git-write authority at invocation; documentation must make that explicit.
 - Agent quality and prompt compliance remain model-dependent. Unsafe index/mixed state stops are intentional friction.
 - WP006's two-turn contract, implementation evidence and blocked acceptance stay immutable. WP007 must independently validate v7, including real Agent behavior and concise output.
-- `/mgood:git-push` remains unchanged: separate invocation, preview/confirmation and configured-upstream-only core guard.
+- The former `/mgood:git-push` contract was later superseded by the separately confirmed Agent-driven `/mgood:git-commit-push` workflow; see the active Git command contract.

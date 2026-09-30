@@ -50,6 +50,8 @@ Both mutations require a fresh, explicit affirmative interactive confirmation. C
 
 On 2026-09-21, the user chose `/mgood:git-commit <message>` and `/mgood:git-push` as the only public commands. The old short names are not compatibility aliases. This preserves the commit/push authority, preview, confirmation, revalidation, subprocess, and trust-boundary decisions above while aligning with the repository command namespace convention.
 
+> **Superseded command name (2026-09-30):** the active public command is now `/mgood:git-commit-push`, reflecting its commit-and-push workflow. `/mgood:git-push` is not retained as an alias. The historical v2 decision above remains an accurate record of its original contract.
+
 The extension registers each namespaced command once. Pi's public API permits same-name extension commands to coexist with numeric invocation suffixes; `pi.getCommands()` does not provide a complete inventory of built-in interactive commands. Consequently, the plugin must not promise to detect all built-in conflicts or override Pi's suffix behavior. Namespacing lowers collision probability, and tests must record actual discoverable registration behavior.
 
 Pi command contexts can omit `signal` outside an active agent stream. The core therefore accepts an optional caller `AbortSignal`, while every Git process independently enforces timeout, output limits, terminal-prompt disablement, and redacted errors. This does not weaken failure-closed confirmation requirements.

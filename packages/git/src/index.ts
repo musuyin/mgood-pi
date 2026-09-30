@@ -8,7 +8,7 @@ export type {
   PushResult,
   RepositorySnapshot,
 } from "./contracts.js";
-export { COMMIT_COMMAND, GitError, PUSH_COMMAND } from "./contracts.js";
+export { COMMIT_COMMAND, COMMIT_PUSH_COMMAND, GitError } from "./contracts.js";
 export { SpawnGitExecutor } from "./executor.js";
 export type { SpawnGitExecutorOptions } from "./executor.js";
 export { escapeForPreview, redact, validateRef } from "./policy.js";

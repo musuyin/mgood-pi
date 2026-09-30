@@ -1,5 +1,5 @@
 export const COMMIT_COMMAND = "mgood:git-commit";
-export const PUSH_COMMAND = "mgood:git-push";
+export const COMMIT_PUSH_COMMAND = "mgood:git-commit-push";
 
 export interface GitCommand {
   readonly args: readonly string[];

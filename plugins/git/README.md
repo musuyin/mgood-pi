@@ -2,11 +2,12 @@
 
 > **状态：** 此仓库已实现 v7 发布候选；真实 Pi TUI/disposable-repository 验收和独立 Review 尚未完成，发布前不得将其视为已接受。
 
-Pi extension with two distinct Git workflows:
+Pi extension with three uniform current-Agent Git workflows:
 
 ```text
 /mgood:git-commit [natural-language constraints]
-/mgood:git-push
+/mgood:git-commit-push-pr [natural-language constraints]
+/mgood:git-commit-push
 ```
 
 ## Install and uninstall
@@ -33,16 +34,20 @@ On the normal path it uses precise commands such as `git add -- <exact paths>` a
 
 This is a behavioral protocol, **not a capability sandbox**: Pi tools, shells, hooks, credential helpers, and external processes retain local-user privileges.
 
-## `/mgood:git-push`: independent protected mutation
+## `/mgood:git-commit-push`: confirmed commit-and-push workflow
 
-`/mgood:git-push` accepts no arguments. In an interactive TUI it previews the current attached branch's configured upstream, asks for one explicit confirmation, revalidates the exact fully-qualified refspec, then uses direct argv to push. It does not accept arbitrary targets, force options, configuration writes, or automatic invocation from the commit workflow.
+This command now has the same current-Agent workflow model as commit and commit-push-PR. It accepts optional natural-language constraints, asks for one explicit TUI confirmation, then injects a hidden Prompt that performs: inspect → if currently protected, automatically `git switch -c` a descriptive feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch. It must never push to `main`, `master`, `dev`, or `develop` (case-insensitive), force-push, change Git configuration, push tags, delete refs, or rewrite history.
+
+## `/mgood:git-commit-push-pr`: confirmed feature-branch workflow
+
+This workflow uses the same confirmation and safe commit/push boundary as `/mgood:git-commit-push`, then creates one pull request with `gh pr create`. The sequence is: inspect → if currently protected, automatically `git switch -c` a descriptive feature branch before staging → exact-path Conventional Commit(s) → push only that non-protected branch → `gh pr create`. Protected branches can be PR bases but never push destinations. It stops on unsafe repository state, push failure, or PR failure and never force-pushes, merges, or rewrites history.
 
 ## Non-interactive behavior and recovery
 
-The extension starts no timers, watchers, processes, or network connections when loaded. Commit launch in print/JSON/RPC-like modes, missing UI, busy Agent, or Prompt-read failure fails closed with no injection. Push in non-interactive mode fails closed with no inspection/mutation. Errors identify safe remediation without exposing credentials.
+The extension starts no timers, watchers, processes, or network connections when loaded. Commit launch in print/JSON/RPC-like modes, missing UI, busy Agent, or Prompt-read failure fails closed with no injection. Commit-and-push and commit-push-PR launches in non-interactive mode fail closed with no injection or mutation. Errors identify safe remediation without exposing credentials.
 
 ## Manual verification
 
-Only use an authorized disposable repository and local bare remote—not the development checkout or a live remote. In a real Pi TUI, verify one command creates semantic multi-commits without preview/confirmation/file list; no-change; staged and mixed-state safe stops; drift; hook partial failure; narrow terminal; no automatic push; and an independent local-bare push. Capture redacted transcript, executed argv, and Git before/after evidence. Unit tests verify the launcher and core push contracts only; they do not prove live-Agent compliance.
+Only use an authorized disposable repository and local bare remote—not the development checkout or a live remote. In a real Pi TUI, verify one command creates semantic multi-commits without preview/confirmation/file list; no-change; staged and mixed-state safe stops; drift; hook partial failure; narrow terminal; no automatic push from `/mgood:git-commit`; confirmed feature-branch commit-and-push; and confirmed commit-push-PR. Capture redacted transcript, executed argv, and Git before/after evidence. Unit tests verify the launcher and core push contracts only; they do not prove live-Agent compliance.
 
 See [the feature guide](../../docs/features/git/README.md), [command contract](../../docs/plugin-contracts/git-commands.md), and [security review](../../docs/security/git-commands.md).

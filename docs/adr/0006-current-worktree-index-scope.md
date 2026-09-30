@@ -37,7 +37,7 @@ Integration tests create at least two linked worktrees on distinct branches with
 
 Hooks, cancellation, drift and failures after index clearing retain the v4 non-transactional contract: successful commits remain, later batches stop, and the result reports actual current-worktree HEAD/index/worktree state and unexecuted paths. No reset-based rollback, restore, checkout, stash, clean, retry or replan occurs.
 
-`/mgood:git-push` remains a separate, separately confirmed configured-upstream-only operation and never follows commit automatically.
+At the time of this decision, `/mgood:git-push` remained a separate configured-upstream-only operation. That command contract was later superseded by the confirmed Agent-driven `/mgood:git-commit-push` workflow; see the active Git command contract.
 
 ## Alternatives considered
 

@@ -37,7 +37,7 @@ After one affirmative confirmation, core may use only fixed direct-argv, exact-p
 
 Each normal commit runs hooks. The executor revalidates before the first write and around every batch, reports concise progress without another confirmation, and verifies resulting SHA/tree/path membership. Hook failure, cancellation, drift, or mismatch stops the sequence. Successful commits remain; there is no automatic rollback, index restoration, retry, replan, amend, or history rewrite. The result reports the actual HEAD/index/worktree and all unexecuted paths, including whether the original staged state was already cleared.
 
-`/mgood:git-push` never follows commit automatically. It remains a separately invoked and separately confirmed configured-upstream-only operation without force or arbitrary remote/ref arguments.
+At the time of this decision, `/mgood:git-push` never followed commit automatically and remained a separately invoked configured-upstream-only operation. That command contract was later superseded by the confirmed Agent-driven `/mgood:git-commit-push` workflow; see the active Git command contract.
 
 ## Alternatives considered
 

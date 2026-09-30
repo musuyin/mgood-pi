@@ -35,7 +35,7 @@ Explicit `--exclude` uses a documented repository-relative glob subset and alway
 
 The sequence is intentionally non-transactional. Each normal Git commit runs configured hooks. Any hook failure, cancellation, state drift, unexpected index/worktree mutation, or result mismatch stops the sequence. Successful commits remain. The plugin never automatically resets, rewrites, retries, reorders, or replans. It reports successful SHAs, the failed group, current repository/index state and unexecuted groups; the user inspects or repairs the repository and starts a new plan.
 
-`/mgood:git-push` retains ADR 0002's configured-upstream-only boundary. No broader push authority is introduced.
+`/mgood:git-push` retained ADR 0002's configured-upstream-only boundary at the time of this decision. It was later superseded by the confirmed Agent-driven `/mgood:git-commit-push` workflow; see the active Git command contract.
 
 ## Alternatives considered
 
