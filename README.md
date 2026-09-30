@@ -9,16 +9,16 @@ A composable plugin kit for a better [Pi](https://pi.dev) coding-agent experienc
 The repository is initialized as an npm-workspace TypeScript monorepo. Current user-facing capabilities are:
 
 - `@mgood-pi/plugin-market` — `/mgood:init` previews the planned project bootstrap layout, and `/mgood:market` safely installs a selected curated plugin after explicit confirmation.
-- `@mgood-pi/plugin-plan-workflow` — bilingual TUI-only `/mgood:plan` for lightweight local plans under `tmp/work-plans/`, with one living `PLAN.md` and append-only `REVIEW.md`. Model selection remains explicit through Pi's built-in `/model` command.
-- `@mgood-pi/plugin-git` — 实施中的统一三命令：`/mgood:git-commit [constraints]` 只安全提交；`/mgood:git-commit-push [constraints]` 经明确确认后执行 feature-branch commit + push；`/mgood:git-commit-push-pr [constraints]` 在此基础上创建 PR。两个 push-capable workflow 绝不 push 至 `main`/`master`/`dev`/`develop`，并禁止 force/rewrite。真实 Pi TUI/disposable-repository 验收尚未记录，发布前不可将其视为完成。参见[安全 Git 功能文档](./docs/features/git/README.md)。
+- `@mgood-pi/plugin-plan-workflow` — TUI-only `/mgood:plan` for lightweight local plans under `tmp/work-plans/`, with one living `PLAN.md` and append-only `REVIEW.md`. Model selection remains explicit through Pi's built-in `/model` command.
+- `@mgood-pi/plugin-git` — three in-progress one-command workflows: `/mgood:git-commit [constraints]` safely commits; `/mgood:git-commit-push [constraints]` confirms then creates a feature-branch commit and push; `/mgood:git-commit-push-pr [constraints]` also creates a PR. Push-capable workflows never push to `main`/`master`/`dev`/`develop` and prohibit force or history rewrites. Real Pi TUI/disposable-repository acceptance is not yet recorded, so this feature is not complete or released. See the [Safe Git feature guide](./docs/features/git/README.md).
 
 ## Layout
 
 - `packages/core` — framework-neutral contracts shared by plugins.
 - `packages/plan-workflow` — framework-neutral Schema v5 local `PLAN.md` and `REVIEW.md` discovery.
-- `packages/git` — framework-neutral configured-upstream push safety core 和 bounded Git executor；commit 工作流由插件私有 Prompt 委托给当前 Agent。
+- `packages/git` — framework-neutral configured-upstream push-safety core and bounded Git executor; commit workflows are delegated to the current Agent through private plugin prompts.
 - `plugins/plan-workflow` — interactive Plan Workflow adapter and bundled prompts.
-- `plugins/git` — TUI-only current-Agent launchers for commit, confirmed commit-push, and confirmed commit-push-PR。
+- `plugins/git` — TUI-only current-Agent launchers for one-command commit, confirmed commit-push, and confirmed commit-push-PR.
 - `plugins/market` — Pi extension adapter for `/mgood:init` and `/mgood:market`.
 - `docs/features` — maintained wiki-style documentation owned by each implemented feature, including clearly marked planned features.
 - `tmp/work-plans` — local, user-managed Plan and Review workbench state; it is normally ignored rather than committed.
@@ -53,7 +53,7 @@ Then select a model explicitly and start or resume a local plan:
 
 ```text
 /model
-/mgood:plan 添加可恢复操作
+/mgood:plan add a recoverable operation
 /mgood:plan tmp/work-plans/<feature>
 ```
 
@@ -77,7 +77,7 @@ The package manifests declare their extensions through `pi` fields. Plan Workflo
 
 - `/mgood:init` has no network, subprocess, Git, or persistent-storage behavior. `/mgood:market` starts `pi install` only after the user explicitly selects a curated entry and confirms its exact source and scope; it never runs a shell command or installs arbitrary user-provided sources.
 - Plan Workflow's extension reads fixed-root Schema v5 local-plan metadata and dispatches bundled internal guidance as hidden custom session messages. TUI-only `/mgood:plan` creates, reads, continues, adjusts, reviews, or explicitly discards local `tmp/work-plans/` state. It does not modify `.gitignore`, Git state, or formal project documentation automatically. Prompt-guided model actions are not an OS sandbox.
-- 实施中的 Git 命令统一以 current-Agent hidden Prompt 启动：`/mgood:git-commit` 只提交；`/mgood:git-commit-push` 在 TUI 确认后提交并只推送 non-protected feature branch；`/mgood:git-commit-push-pr` 在相同边界下再执行 `gh pr create`。若 push-capable workflow 从 `main`/`master`/`dev`/`develop`（大小写不敏感）启动，则在 read-only preflight 成功后 Agent 必须自动以 `git switch -c <branch>` 创建并切换 descriptive feature branch，再开始 staging、commit 或 push；不会要求用户自行 checkout。两个 workflow 均禁止 protected destination、force、配置改写与历史重写。隐藏只影响 TUI transcript，内容仍进入 LLM context 且可能留在 local session/export；它们是行为协议而非 sandbox。`packages/git` 继续提供采用 direct Git argv、explicit cwd、disabled terminal credential prompts、time/output bounds、redacted diagnostics 与 raw remote identity fingerprint 的独立 configured-upstream push core，但插件不再把该 core 暴露为 slash command。hooks、helpers、transport 和 server policy 不在边界内。见 [Git command contract](./docs/plugin-contracts/git-commands.md) 与 [security review](./docs/security/git-commands.md)。
+- The in-progress Git commands use hidden current-Agent prompts: `/mgood:git-commit` only commits; `/mgood:git-commit-push` confirms in the TUI before committing and pushing only a non-protected feature branch; `/mgood:git-commit-push-pr` also runs `gh pr create`. When a push-capable command starts on `main`/`master`/`dev`/`develop` (case-insensitive), the Agent first inspects naming conventions and implementation scope, then automatically creates and switches to a meaningful unused feature branch with `git switch -c <branch>` before staging, committing, or pushing. Users do not need to check out a branch manually. Without a convention, it uses a Conventional-Commit type and short lowercase-kebab-case summary, such as `feat/git-commit-workflow`. Both workflows prohibit protected destinations, force, configuration changes, and history rewrites. Hidden prompts remain in LLM context and may be retained in local sessions or exports; they are behavioral protocols rather than sandboxes. `packages/git` retains a standalone configured-upstream push core with direct Git argv, explicit cwd, disabled terminal credential prompts, time/output bounds, redacted diagnostics, and raw remote identity fingerprints, but the plugin does not expose it as a slash command. Hooks, helpers, transport, and server policy are outside the boundary. See the [Git command contract](./docs/plugin-contracts/git-commands.md) and [security review](./docs/security/git-commands.md).
 - Future MCP, skill, and memory features must follow the approval, redaction, and user-control rules in [`AGENTS.md`](./AGENTS.md).
 - Local Pi runtime state and future local memory database/index files are ignored by Git via [`.gitignore`](./.gitignore).
 
