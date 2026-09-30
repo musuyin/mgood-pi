@@ -3,6 +3,8 @@ import { GitError } from "./contracts.js";
 import { makeFingerprint, redact, validateRef } from "./policy.js";
 import { inspectRepository, readConfiguredUpstream } from "./repository.js";
 
+const PROTECTED_BRANCHES = new Set(["main", "master", "dev", "develop"]);
+
 interface PushState {
   readonly snapshot: RepositorySnapshot & { readonly branch: string };
   readonly remote: string;
@@ -41,6 +43,14 @@ async function readPushState(executor: GitExecutor, cwd: string): Promise<PushSt
       "policy-rejected",
       "The configured upstream destination is not a branch ref.",
       "Configure a refs/heads/* upstream outside this plugin.",
+    );
+  }
+  const destinationBranch = mergeRef.slice("refs/heads/".length);
+  if (PROTECTED_BRANCHES.has(destinationBranch.toLowerCase())) {
+    throw new GitError(
+      "policy-rejected",
+      `Refusing to push to protected branch ${destinationBranch}.`,
+      "Push from a non-protected feature branch and open a pull request instead.",
     );
   }
   const localRef = `refs/heads/${validateRef(snapshot.branch, "current branch")}`;
@@ -103,7 +113,7 @@ export async function executePush(
     throw new GitError(
       "state-drift",
       "Git push target changed after the preview; no push was attempted.",
-      "Run /mgood:git-push again to review the current target.",
+      "Run the applicable Git workflow again to review the current target.",
     );
   }
   const result = await executor.run({

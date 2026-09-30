@@ -27,7 +27,7 @@ The first Agent turn is read-only. It presents the complete ordered plan with ex
 
 After approval, the Agent uses direct exact-path staging and ordinary commits, checks staged membership before each commit, and verifies status after each result. The prompt prohibits broad staging, destructive reset/restore/checkout/clean/stash, history rewriting and automatic push. Drift, hook failure or unexpected staged content stops execution; successful commits remain and the Agent reports actual partial state.
 
-These constraints are behavioral instructions to the Agent, not a core-enforced capability sandbox. Pi's standard bash tool, hooks and external processes retain local-user privileges. Documentation must state this limitation plainly. `/mgood:git-push` remains a separate, core-mediated configured-upstream-only command with its own confirmation.
+These constraints are behavioral instructions to the Agent, not a core-enforced capability sandbox. Pi's standard bash tool, hooks and external processes retain local-user privileges. Documentation must state this limitation plainly. The former `/mgood:git-push` configured-upstream-only command was later superseded by confirmed Agent-driven `/mgood:git-commit-push`; see the active Git command contract.
 
 ### Architecture simplification
 
