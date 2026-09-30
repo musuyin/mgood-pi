@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/plugin-plan-workflow",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Interactive bilingual local PLAN.md and REVIEW.md workflow for Pi.",
   "type": "module",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "@mgood-pi/plan-workflow-core": "^0.2.0"
+    "@mgood-pi/plan-workflow-core": "^1.0.0"
   },
   "bundledDependencies": [
     "@mgood-pi/plan-workflow-core"

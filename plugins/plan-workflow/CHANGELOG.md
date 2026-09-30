@@ -23,6 +23,18 @@
 - Renamed public commands to the consistent namespaced `/mgood:plan-make`, `/mgood:plan-do`, `/mgood:plan-review`, and `/mgood:plan-list` API; no legacy aliases are retained.
 - Replaced publicly registered prompt templates with private bundled `create-work-plan`, `execute-work-plan`, and `review-implementation` guidance read by the Extension.
 
+## 1.0.0
+
+### Major Changes
+
+- [`d3469ef`](https://github.com/musuyin/mgood-pi/commit/d3469ef3639ddd698af878e77dab987322fc8a23) Thanks [@musuyin](https://github.com/musuyin)! - Replace the repository-managed workflow with breaking Schema v5 local Plan Workflow. Expose only TUI-only `/mgood:plan`; store mutable local state solely in `tmp/work-plans/<feature>/{PLAN.md,REVIEW.md}`. Remove Work Plans, phases, approvals, supersession, immutable remediation reviews, and all runtime scanning of repository-root `work-plans/`. Internal guidance remains hidden custom session context rather than public prompt commands.
+
+### Patch Changes
+
+- [`6a6f58c`](https://github.com/musuyin/mgood-pi/commit/6a6f58c0854cb054a2453b76814c7fd3575053b8) Thanks [@musuyin](https://github.com/musuyin)! - Prepare independently installable Pi packages for public npm publication, including the Plan Workflow plugin and its shared implementation dependency. Add the curated, explicitly confirmed `/mgood:market` installer to the market plugin.
+- Updated dependencies [[`d3469ef`](https://github.com/musuyin/mgood-pi/commit/d3469ef3639ddd698af878e77dab987322fc8a23), [`6a6f58c`](https://github.com/musuyin/mgood-pi/commit/6a6f58c0854cb054a2453b76814c7fd3575053b8)]:
+  - @mgood-pi/plan-workflow-core@1.0.0
+
 ## 0.2.0 — 2026-09-21
 
 ### Added

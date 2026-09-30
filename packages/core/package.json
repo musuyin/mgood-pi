@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Framework-neutral contracts shared by mgood-pi plugins.",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",

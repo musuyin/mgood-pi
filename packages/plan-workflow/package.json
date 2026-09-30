@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/plan-workflow-core",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Schema v5 local PLAN.md and REVIEW.md discovery for mgood-pi Plan Workflow.",
   "type": "module",
   "license": "MIT",
