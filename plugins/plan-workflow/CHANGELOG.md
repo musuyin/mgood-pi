@@ -4,10 +4,9 @@
 
 ### Changed
 
-- Added `/mgood:plan-approve` for TUI-only explicit `draft` → `approved` approval with audit fields, Yes/No feedback handling, and Feature HISTORY events.
-- Added same-Feature Plan replacement lineage: `/mgood:plan-make` records draft `supersedes` intent and approval marks an eligible old Plan `superseded`, preserving history and updating the current-Plan pointer.
-- Made `/mgood:plan-list` read individual Plan `APPROVAL.md` files without a model turn.
-- Adopted breaking Schema v4 with canonical Work Plan `APPROVAL.md` entries; no Work Plan README loader remains.
+- Replaced the repository-managed Schema v4 hierarchy with the breaking Schema v5 local workflow: one TUI-only `/mgood:plan` command and `tmp/work-plans/<feature>/{PLAN.md,REVIEW.md}`.
+- Removed public make/list/approve/do/review commands, Work Plan approval/supersession state, phases, and immutable remediation reviews from the current runtime.
+- Internal planner, executor, and reviewer guidance now operates on the same mutable local Plan and append-only local Review.
 
 ### Added
 

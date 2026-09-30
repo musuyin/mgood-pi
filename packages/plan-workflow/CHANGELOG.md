@@ -4,8 +4,8 @@
 
 ### Changed
 
-- Adopted breaking Schema v4 with canonical Work Plan `APPROVAL.md` entries; no Work Plan README loader remains.
-- Added optional Schema v4 Plan supersession lineage parsing: `supersedes`, `superseded_by`, `superseded_at`, and `supersede_reason`.
+- Replaced Schema v4 Feature/Work Plan discovery with breaking Schema v5 local `tmp/work-plans/<feature>/{PLAN.md,REVIEW.md}` discovery.
+- Removed runtime support for repository-root workflow trees, phases, approvals, immutable reviews, and supersession lineage.
 
 ### Changed
 

@@ -17,11 +17,11 @@ export const PLUGIN_CATALOG: readonly PluginCatalogEntry[] = [
   {
     id: "plan-workflow",
     name: "Plan Workflow",
-    description: "Create, inspect, explicitly approve, and execute phased implementation plans.",
+    description: "Create, continue, and review lightweight local implementation plans.",
     source: "npm:@mgood-pi/plugin-plan-workflow@1.0.0",
     capabilities: [
-      "Registers /mgood:plan-make, /mgood:plan-list, /mgood:plan-approve, /mgood:plan-do, and /mgood:plan-review",
-      "Reads Schema v4 Plan APPROVAL.md files and requires explicit TUI approval before execution",
+      "Registers the TUI-only /mgood:plan local workflow",
+      "Uses only tmp/work-plans/ local PLAN.md and REVIEW.md files",
     ],
   },
 ] as const;

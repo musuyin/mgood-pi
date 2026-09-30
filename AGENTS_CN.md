@@ -16,7 +16,7 @@
 - MCP 集成：连接生命周期、工具/资源暴露、配置 UX、健康检查与权限边界。
 - Git 工作流：worktree/session 感知、检查点、安全的 review/commit/restore 流程与仓库状态 UI。
 - 持久化项目/用户记忆：显式长期笔记、元数据存储、检索工具、可选本地 RAG 索引、导入/导出与用户控制。
-- 可复用的 prompt 工作流，包括 Plan Workflow 的 `/mgood:plan-make`、只读 `/mgood:plan-list`、仅 TUI 的 `/mgood:plan-approve`、`/mgood:plan-do` 和 `/mgood:plan-review` 体验。
+- 可复用的 prompt 工作流，包括 Plan Workflow 仅 TUI 的 `/mgood:plan` 本地计划、实施和验收体验。
 
 ### 明确不在范围内
 
@@ -67,20 +67,20 @@
 ├── package.json / package-lock.json   # private workspace 根与 lockfile
 ├── packages/
 │   ├── core/                          # 共享、框架无关的契约
-│   └── plan-workflow/                 # Schema v4 Feature/Work Plan/Review 发现
+│   └── plan-workflow/                 # Schema v5 本地 PLAN/REVIEW 发现
 ├── plugins/
 │   ├── market/                        # /mgood:market 与 /mgood:init
-│   └── plan-workflow/                 # /mgood:plan-make、:plan-list、:plan-approve、:plan-do、:plan-review；私有内置指引
+│   └── plan-workflow/                 # /mgood:plan；私有内置本地计划指引
 ├── docs/
 │   ├── adr/                           # 架构决策记录
 │   ├── features/                      # 已实现功能的持续维护文档
 │   └── releasing.md                   # 独立 npm 发布流程
-├── work-plans/                        # 已提交的 Schema v4 Feature/Work Plan/Review 数据
+├── tmp/work-plans/                    # 用户管理的本地 Schema v5 PLAN/REVIEW 临时数据
 ├── .changeset/                        # 独立 package 发布意图
 └── .github/workflows/release.yml      # 校验、Version Packages PR 与发布
 ```
 
-Plan Workflow 只从仓库根目录 `work-plans/` 发现共享工作流数据。不得添加品牌化别名、可配置 root，也不得递归搜索其他同名目录。
+Plan Workflow 只从 `tmp/work-plans/` 发现本地工作流数据。不得添加品牌化别名、可配置 root、递归搜索，或兼容扫描仓库根目录 `work-plans/`。
 
 仅当第一个真实 package 或已文档化职责出现时才添加目录。将来的 `packages/ui`、`packages/skillset`、`packages/mcp`、`packages/git`、`packages/memory`、相应 plugins、`skills/`、`prompts/`、`themes/`、`services/`、`examples/` 与 `scripts/` 遵循同样边界。
 
@@ -91,7 +91,7 @@ Plan Workflow 只从仓库根目录 `work-plans/` 发现共享工作流数据。
 - plugin 可依赖 `packages/*`；package 永远不得依赖 plugin。
 - 避免 god-plugin。优先提供可独立安装的 feature package，以及可选的 curated bundle/meta-package。
 - 每个可分发 package 必须按需具备明确的 `pi` manifest、license、Pi/Node 支持版本、README、changelog、发布文件 allowlist 和公开 npm metadata。
-- 除非明确预留短名称，否则使用带命名空间的命令。当前命令包括 `/mgood:init`、`/mgood:market`、`/mgood:plan-make`、`/mgood:plan-list`、`/mgood:plan-approve`、`/mgood:plan-do` 和 `/mgood:plan-review`。不得覆盖 Pi 内建命令。
+- 除非明确预留短名称，否则使用带命名空间的命令。当前命令包括 `/mgood:init`、`/mgood:market` 和 `/mgood:plan`。不得覆盖 Pi 内建命令。
 - Extension factory 不得启动 timer、watcher、process 或 network connection。应在 `session_start` 或懒加载时启动 session 范围资源，并在幂等的 `session_shutdown` handler 中关闭。
 
 ### Plugin Market 契约

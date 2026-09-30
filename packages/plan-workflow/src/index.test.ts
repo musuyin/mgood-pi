@@ -4,137 +4,73 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  WORK_PLAN_APPROVAL_FILE,
-  discoverFeatures,
-  discoverReviews,
-  discoverWorkPlans,
-  executionStatus,
-  loadFeature,
-  loadReview,
-  loadWorkPlan,
+  PLAN_FILE,
+  REVIEW_FILE,
+  WORK_PLANS_ROOT,
+  discoverPlans,
+  loadPlan,
   taskCounts,
   taskStatusIcon,
-  WORK_PLANS_ROOT,
 } from "./index.js";
 
-async function tempRepository(): Promise<string> {
-  return mkdtemp(path.join(tmpdir(), "mgood-plan-workflow-"));
+async function repository(): Promise<string> {
+  return mkdtemp(path.join(tmpdir(), "mgood-plan-lite-"));
 }
 
-async function write(repository: string, relativePath: string, content: string): Promise<void> {
-  const target = path.join(repository, relativePath);
+async function write(root: string, relative: string, content: string): Promise<void> {
+  const target = path.join(root, relative);
   await mkdir(path.dirname(target), { recursive: true });
   await writeFile(target, content);
 }
 
-async function createFeature(repository: string): Promise<void> {
+async function plan(root: string, id = "example"): Promise<void> {
   await write(
-    repository,
-    `${WORK_PLANS_ROOT}/example/README.md`,
-    `---\ntitle: Example feature\nfeature_id: example\nschemaVersion: 4\nstatus: active\nlanguage: en\ncurrent_work_plan: work-plans/001-initial\n---\n`,
+    root,
+    `${WORK_PLANS_ROOT}/${id}/${PLAN_FILE}`,
+    "---\ntitle: Example plan\nfeature_id: example\nschemaVersion: 5\nstatus: active\nlanguage: en\n---\n# Plan\n- [x] Finished\n- [>] In progress\n- [!] Blocked\n- [ ] Next\n",
   );
-  await write(
-    repository,
-    `${WORK_PLANS_ROOT}/example/work-plans/001-initial/APPROVAL.md`,
-    `---\ntitle: Initial implementation\nfeature_id: example\nwork_plan_id: 001-initial\nschemaVersion: 4\nsequence: 1\nkind: implementation\nstatus: active\nreview_status: pending\nlanguage: en\n---\n`,
-  );
-  await write(
-    repository,
-    `${WORK_PLANS_ROOT}/example/work-plans/001-initial/phases/phase-1-foundation/PLAN.md`,
-    `---\ntitle: Foundation\nphase: phase-1-foundation\nstatus: active\n---\n- [x] **EX-001: Finished work**\n- [>] **EX-002: Current work**\n- [!] **EX-003: Blocked work**\n- [ ] **EX-004: Future work**\n`,
-  );
-  await write(
-    repository,
-    `${WORK_PLANS_ROOT}/example/work-plans/001-initial/reviews/20260922T100000-review.md`,
-    `---\ntitle: Initial review\nreview_id: 20260922T100000-review\nschemaVersion: 4\ntarget_work_plan: 001-initial\nverdict: changes-required\n---\nfindings:\n  - id: REV-001\n  - id: REV-002\n`,
-  );
+  await write(root, `${WORK_PLANS_ROOT}/${id}/${REVIEW_FILE}`, "# Review\n");
 }
 
-describe("schema v4 discovery", () => {
-  it("uses the unbranded repository-root work-plans directory and APPROVAL.md entry", () => {
-    expect(WORK_PLANS_ROOT).toBe("work-plans");
-    expect(WORK_PLAN_APPROVAL_FILE).toBe("APPROVAL.md");
+describe("local Plan Workflow discovery", () => {
+  it("uses only the fixed tmp/work-plans root and two canonical files", () => {
+    expect(WORK_PLANS_ROOT).toBe(path.join("tmp", "work-plans"));
+    expect(PLAN_FILE).toBe("PLAN.md");
+    expect(REVIEW_FILE).toBe("REVIEW.md");
   });
 
-  it("discovers features, work plans, phases, tasks, and reviews from the fixed root", async () => {
-    const repository = await tempRepository();
-    await createFeature(repository);
-
-    const features = await discoverFeatures(repository);
-    const workPlans = await discoverWorkPlans(repository);
-    const reviews = await discoverReviews(repository);
-
-    expect(features).toHaveLength(1);
-    expect(features[0]?.currentWorkPlan).toBe("work-plans/001-initial");
-    expect(workPlans[0]?.featureTitle).toBe("Example feature");
-    expect(workPlans[0]?.phases[0]?.tasks.map((task) => task.status)).toEqual([
-      "completed",
-      "running",
-      "blocked",
-      "not_started",
-    ]);
-    expect(taskCounts(workPlans[0]!)).toEqual({
-      completed: 1,
-      running: 1,
-      blocked: 1,
-      not_started: 1,
-    });
-    expect(executionStatus(workPlans[0]!)).toBe("running");
-    expect(reviews[0]).toMatchObject({ verdict: "changes-required", findingCount: 2 });
+  it("discovers a local Plan and its checklist summary", async () => {
+    const root = await repository();
+    await plan(root);
+    const plans = await discoverPlans(root);
+    expect(plans).toHaveLength(1);
+    expect(plans[0]?.directory).toBe(path.join(WORK_PLANS_ROOT, "example"));
+    expect(plans[0]?.reviewPath).toBe(path.join(WORK_PLANS_ROOT, "example", REVIEW_FILE));
+    expect(taskCounts(plans[0]!)).toEqual({ completed: 1, running: 1, blocked: 1, not_started: 1 });
+    expect(taskStatusIcon("running")).toBe("▶");
   });
 
-  it("loads explicit feature, work-plan, and review paths", async () => {
-    const repository = await tempRepository();
-    await createFeature(repository);
-    const featurePath = path.join(repository, WORK_PLANS_ROOT, "example");
-    const workPlanPath = path.join(featurePath, "work-plans/001-initial");
-    const reviewPath = path.join(workPlanPath, "reviews/20260922T100000-review.md");
-
-    expect((await loadFeature(repository, featurePath))?.id).toBe("example");
-    expect((await loadWorkPlan(repository, workPlanPath))?.approvalPath).toBe(
-      "work-plans/example/work-plans/001-initial/APPROVAL.md",
-    );
-    expect((await loadReview(repository, reviewPath))?.id).toBe("20260922T100000-review");
-  });
-
-  it("ignores old and similarly named roots", async () => {
-    const repository = await tempRepository();
+  it("ignores the old repository work-plans root and invalid local directories", async () => {
+    const root = await repository();
     await write(
-      repository,
-      "docs/plans/old/APPROVAL.md",
-      "---\nplan_id: old\nschemaVersion: 2\n---\n",
+      root,
+      "work-plans/legacy/PLAN.md",
+      "---\nschemaVersion: 5\nfeature_id: legacy\n---\n",
     );
-    await write(
-      repository,
-      "nested/work-plans/example/README.md",
-      "---\nfeature_id: wrong\nschemaVersion: 4\n---\n",
-    );
-
-    expect(await discoverFeatures(repository)).toEqual([]);
+    await write(root, `${WORK_PLANS_ROOT}/invalid/${PLAN_FILE}`, "# no frontmatter\n");
+    expect(await discoverPlans(root)).toEqual([]);
   });
 
-  it("rejects fixed-root descendants symlinked outside the repository", async () => {
-    const repository = await tempRepository();
-    const outside = await tempRepository();
-    await createFeature(outside);
-    await mkdir(path.join(repository, WORK_PLANS_ROOT), { recursive: true });
+  it("rejects manual paths outside the root and symlink escapes", async () => {
+    const root = await repository();
+    await plan(root);
+    const external = await repository();
+    await plan(external, "outside");
     await symlink(
-      path.join(outside, WORK_PLANS_ROOT, "example"),
-      path.join(repository, WORK_PLANS_ROOT, "escaped"),
+      path.join(external, WORK_PLANS_ROOT, "outside"),
+      path.join(root, WORK_PLANS_ROOT, "escape"),
     );
-
-    expect(
-      await loadFeature(repository, path.join(repository, WORK_PLANS_ROOT, "escaped")),
-    ).toBeNull();
-  });
-});
-
-describe("taskStatusIcon", () => {
-  it("returns readable status symbols", () => {
-    expect(
-      ["completed", "running", "blocked", "not_started"].map((status) =>
-        taskStatusIcon(status as never),
-      ),
-    ).toEqual(["✓", "▶", "!", "○"]);
+    expect(await loadPlan(root, path.join(root, "work-plans", "legacy"))).toBeNull();
+    expect(await loadPlan(root, path.join(root, WORK_PLANS_ROOT, "escape"))).toBeNull();
   });
 });
