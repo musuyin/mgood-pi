@@ -65,7 +65,7 @@ The workflow never runs `changeset version`, creates commits, opens pull request
 
 Create a granular npm token with **Read and write (stage only)** access to the `@mgood-pi` organization and save it as the `NPM_STAGE_TOKEN` GitHub Actions repository secret. The workflow supplies it only as `NODE_AUTH_TOKEN`. Never put a token in a repository file, command history, issue, or pull-request comment.
 
-The workflow uses Node.js 22.22.2 and invokes npm 12.2.0 through `npx`, rather than mutating the runner's bundled npm installation, because staged publishing requires the `npm stage` command. It grants GitHub Actions `id-token: write` solely so npm can attach provenance to staged tarballs; the stage-only token remains the authority to create staged versions, and maintainer 2FA remains required to publish them. npm Trusted Publishing is not used for direct publishing by this workflow. If the project later adopts npm Trusted Publishing for direct publishing, design and review a separate workflow rather than silently changing this 2FA release boundary.
+The workflow uses Node.js 22.22.2 and invokes npm 12.2.0 through `npx`, rather than mutating the runner's bundled npm installation, because staged publishing requires the `npm stage` command. npm Trusted Publishing is not used by this stage-only workflow. If the project later adopts npm Trusted Publishing for direct publishing, design and review a separate workflow rather than silently changing this 2FA release boundary.
 
 Before the first release, configure GitHub repository Settings → Environments → `npm-production` with at least one required reviewer. Restrict the workflow to maintainers with permission to run workflows.
 
