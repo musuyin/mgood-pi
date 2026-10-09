@@ -59,13 +59,13 @@ Open a pull request for that commit, wait for CI, review the exact version, chan
 
 [Stage packages for npm release](../.github/workflows/release.yml) is intentionally available only through **Run workflow** in GitHub Actions. Start it from `main`, type `STAGE` exactly, and approve the `npm-production` environment if it has required reviewers. The workflow checks out the current `main` head, installs locked dependencies, reruns repository and tarball validation, then stages every workspace version that is not already public.
 
-The workflow never runs `changeset version`, creates commits, opens pull requests, directly publishes packages, or accepts a release ref other than `main`. It uses `npm stage publish` with npm provenance, so staged versions are unavailable to package consumers until a 2FA-enabled maintainer explicitly approves them. The staging script checks each workspace version individually: re-running the workflow skips versions that npm already contains and does not attempt to stage unchanged public packages.
+The workflow never runs `changeset version`, creates commits, opens pull requests, directly publishes packages, or accepts a release ref other than `main`. It uses `npm stage publish` with npm provenance, so staged versions are unavailable to package consumers until a 2FA-enabled maintainer explicitly approves them. The staging script compares every workspace manifest version with the public npm registry and the staged-package list: it skips public versions and already-staged versions, then stages only missing versions. It also refuses to stage a plugin whose matching internal dependency is neither public nor staged.
 
 ### npm authentication
 
 Create a granular npm token with **Read and write (stage only)** access to the `@mgood-pi` organization and save it as the `NPM_STAGE_TOKEN` GitHub Actions repository secret. The workflow supplies it only as `NODE_AUTH_TOKEN`. Never put a token in a repository file, command history, issue, or pull-request comment.
 
-The workflow uses Node.js 22.22.2 and installs npm 12.2.0 or newer because staged publishing requires the `npm stage` command. npm Trusted Publishing is not used by this stage-only workflow. If the project later adopts npm Trusted Publishing for direct publishing, design and review a separate workflow rather than silently changing this 2FA release boundary.
+The workflow uses Node.js 22.22.2 and invokes npm 12.2.0 through `npx`, rather than mutating the runner's bundled npm installation, because staged publishing requires the `npm stage` command. npm Trusted Publishing is not used by this stage-only workflow. If the project later adopts npm Trusted Publishing for direct publishing, design and review a separate workflow rather than silently changing this 2FA release boundary.
 
 Before the first release, configure GitHub repository Settings → Environments → `npm-production` with at least one required reviewer. Restrict the workflow to maintainers with permission to run workflows.
 
@@ -76,16 +76,15 @@ After the staging workflow succeeds, inspect exactly what is pending with the 2F
 ```bash
 npm login
 npm whoami
-npm install --global npm@^12.2.0
-npm stage list
+npx --yes npm@12.2.0 stage list
 ```
 
 For every expected package, inspect its metadata and optionally download its tarball before approving it:
 
 ```bash
-npm stage view <stage-id>
-npm stage download <stage-id>
-npm stage approve <stage-id>
+npx --yes npm@12.2.0 stage view <stage-id>
+npx --yes npm@12.2.0 stage download <stage-id>
+npx --yes npm@12.2.0 stage approve <stage-id>
 ```
 
 `npm stage approve` prompts for your npm 2FA code and makes that one staged version public using the tag fixed at staging time (normally `latest`). Approve shared dependencies before dependent plugins. For this first release, use this order:
@@ -101,7 +100,7 @@ npm stage approve <stage-id>
 If a staged version is unexpected or fails inspection, do not approve it. Remove it with 2FA instead:
 
 ```bash
-npm stage reject <stage-id>
+npx --yes npm@12.2.0 stage reject <stage-id>
 ```
 
 Finally, verify the public registry:
@@ -119,13 +118,12 @@ npm view @mgood-pi/plugin-git version
 Use a local stage only if GitHub Actions is unavailable. Work from a clean, up-to-date `main` commit that already contains the reviewed version changes:
 
 ```bash
-npm install --global npm@^12.2.0
 npm ci
 npm run check
 npm pack --workspaces --dry-run
 npm run stage-release-packages
 ```
 
-Then inspect and promote the staged packages with the same `npm stage list`, `npm stage view`, and 2FA-protected `npm stage approve` sequence above.
+Then inspect and promote the staged packages with the same `npx npm@12.2.0 stage list`, `stage view`, and 2FA-protected `stage approve` sequence above.
 
 Never publish packages that contain local Pi sessions, credentials, project memory, generated `dist` directories, or test fixtures unrelated to package runtime behavior.
