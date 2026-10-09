@@ -15,13 +15,13 @@ export interface PluginCatalogEntry {
 
 export const PLUGIN_CATALOG: readonly PluginCatalogEntry[] = [
   {
-    id: "plan-workflow",
-    name: "Plan Workflow",
-    description: "Create, continue, and review lightweight local implementation plans.",
-    source: "npm:@mgood-pi/plugin-plan-workflow@1.0.0",
+    id: "plan",
+    name: "Plan",
+    description: "Clarify a request and create one implementation-ready Markdown plan.",
+    source: "npm:@mgood-pi/plan@1.0.0",
     capabilities: [
-      "Registers the TUI-only /mgood:plan local workflow",
-      "Uses only tmp/work-plans/ local PLAN.md and REVIEW.md files",
+      "Registers /mgood-pi:plan for interactive clarification and repository investigation",
+      "Writes one Markdown file under tmp/plans/ and does not implement it",
     ],
   },
 ] as const;

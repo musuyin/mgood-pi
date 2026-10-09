@@ -28,6 +28,17 @@ describe("core contracts", () => {
     expect(createInitSummary("/workspace/demo")).toContain("/workspace/demo");
   });
 
+  it("publishes the focused Plan package in the curated catalog", () => {
+    expect(PLUGIN_CATALOG[0]).toMatchObject({
+      id: "plan",
+      name: "Plan",
+      source: "npm:@mgood-pi/plan@1.0.0",
+    });
+    expect(PLUGIN_CATALOG[0]?.capabilities).toContain(
+      "Writes one Markdown file under tmp/plans/ and does not implement it",
+    );
+  });
+
   it("creates safe argument arrays for global and project plugin installs", () => {
     const plugin = PLUGIN_CATALOG[0]!;
 

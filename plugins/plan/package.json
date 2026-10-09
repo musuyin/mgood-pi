@@ -1,7 +1,7 @@
 {
-  "name": "@mgood-pi/plugin-plan-workflow",
+  "name": "@mgood-pi/plan",
   "version": "0.2.0",
-  "description": "Interactive local PLAN.md and REVIEW.md workflow for Pi.",
+  "description": "A focused Plan mode for Pi that clarifies requests and writes one local Markdown plan.",
   "type": "module",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",
@@ -11,12 +11,12 @@
     "pi-package",
     "pi",
     "plugin",
-    "planning",
-    "prompt-template"
+    "plan",
+    "planning"
   ],
   "files": [
     "src/index.ts",
-    "prompts",
+    "prompts/plan.md",
     "README.md",
     "CHANGELOG.md"
   ],
@@ -38,12 +38,6 @@
   "engines": {
     "node": ">=22.0.0"
   },
-  "dependencies": {
-    "@mgood-pi/plan-workflow-core": "^0.2.0"
-  },
-  "bundledDependencies": [
-    "@mgood-pi/plan-workflow-core"
-  ],
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },

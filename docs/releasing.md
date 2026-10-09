@@ -4,12 +4,13 @@
 
 ## Publishable packages
 
-| Package                          | Role                                      | User installation                                    |
-| -------------------------------- | ----------------------------------------- | ---------------------------------------------------- |
-| `@mgood-pi/core`                 | Shared contracts for plugins              | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-market`        | Curated marketplace and bootstrap preview | `pi install npm:@mgood-pi/plugin-market`             |
-| `@mgood-pi/plan-workflow-core`   | Plan discovery/parsing implementation     | Internal dependency; normally not installed directly |
-| `@mgood-pi/plugin-plan-workflow` | TUI-only `/mgood:plan`                    | `pi install npm:@mgood-pi/plugin-plan-workflow`      |
+| Package                   | Role                                      | User installation                                    |
+| ------------------------- | ----------------------------------------- | ---------------------------------------------------- |
+| `@mgood-pi/core`          | Shared contracts for plugins              | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-market` | Curated marketplace and bootstrap preview | `pi install npm:@mgood-pi/plugin-market`             |
+| `@mgood-pi/plan`          | Focused `/mgood-pi:plan` mode             | `pi install npm:@mgood-pi/plan`                      |
+| `@mgood-pi/git`           | Git safety core                           | Internal dependency; normally not installed directly |
+| `@mgood-pi/plugin-git`    | Safe current-Agent Git commands           | `pi install npm:@mgood-pi/plugin-git`                |
 
 A package is publishable when its `package.json` is not `private`, includes public npm metadata, and has `publishConfig.access: "public"`.
 
@@ -68,7 +69,8 @@ Before merging a Version Packages PR or publishing manually, run:
 ```bash
 npm run check
 npm pack --workspace @mgood-pi/plugin-market --dry-run
-npm pack --workspace @mgood-pi/plugin-plan-workflow --dry-run
+npm pack --workspace @mgood-pi/plan --dry-run
+npm pack --workspace @mgood-pi/plugin-git --dry-run
 ```
 
 Never publish packages that contain local Pi sessions, credentials, project memory, generated `dist` directories, or test fixtures unrelated to package runtime behavior.

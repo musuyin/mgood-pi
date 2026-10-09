@@ -16,7 +16,7 @@ Build a composable, independently installable plugin kit that improves the **Pi 
 - MCP integration: connection lifecycle, tool/resource exposure, configuration UX, health checks, and permission boundaries.
 - Git workflow: worktree/session awareness, checkpoints, safe review/commit/restore flows, and repository status UI.
 - Durable project/user memory: explicit long-term notes, metadata storage, retrieval tools, optional local RAG indexing, import/export, and user control.
-- Small, reusable agent-assisted commands, including the existing Plan Workflow's TUI-only `/mgood:plan` experience for local plan, implementation, and review actions.
+- Small, reusable agent-assisted commands, including the focused `/mgood-pi:plan` experience for clarifying a request and creating one implementation-ready local plan.
 
 ### Explicitly out of scope
 
@@ -66,22 +66,21 @@ This is a TypeScript npm-workspaces monorepo. Keep the current layout accurate i
 ├── package.json / package-lock.json   # private workspace root and lockfile
 ├── packages/
 │   ├── core/                          # shared framework-neutral contracts
-│   ├── git/                           # configured-upstream Git safety core
-│   └── plan-workflow/                 # Schema v5 local PLAN/REVIEW discovery
+│   └── git/                           # configured-upstream Git safety core
 ├── plugins/
 │   ├── git/                           # one-command current-Agent Git actions
 │   ├── market/                        # /mgood:market and /mgood:init
-│   └── plan-workflow/                 # /mgood:plan; private bundled local-plan guidance
+│   └── plan/                          # /mgood-pi:plan; private bundled planning guidance
 ├── docs/
 │   ├── adr/                           # architecture decision records
 │   ├── features/                      # maintained implementation documentation
 │   └── releasing.md                   # independent npm release process
-├── tmp/work-plans/                    # user-managed local Schema v5 PLAN/REVIEW temporary data
+├── tmp/plans/                         # generated local Markdown implementation plans
 ├── .changeset/                        # independent package release intents
 └── .github/workflows/release.yml      # validation, Version Packages PR, publishing
 ```
 
-Plan Workflow discovers local workflow data only from `tmp/work-plans/`. Do not add a branded alias, configurable root, recursive search, or compatibility scan of repository-root `work-plans/`.
+Plan writes exactly one new Markdown file directly under `tmp/plans/` after clarification and repository investigation. Do not add discovery, execution, review, status, schema, compatibility aliases, or alternative roots.
 
 Add folders only when their first real package or documented responsibility exists. Future `packages/ui`, `packages/skillset`, `packages/mcp`, `packages/git`, `packages/memory`, matching plugins, `skills/`, `prompts/`, `themes/`, `services/`, `examples/`, and `scripts/` follow these same boundaries.
 
@@ -94,7 +93,7 @@ Add folders only when their first real package or documented responsibility exis
 - Design plugins to be lightweight and easy to use. A plugin's normal, safe path should complete from one namespaced command; use the current Agent or bounded automation to handle workflow steps rather than requiring users to manually coordinate a multi-step process. Keep only confirmations that protect destructive, privileged, or external side effects.
 - Do not introduce a heavy project-management or planning system without an ADR that demonstrates why a small, one-command capability cannot meet the need.
 - Every distributable package needs an explicit `pi` manifest as applicable, license, supported Pi/Node versions, README, changelog, package file allowlist, and public npm metadata.
-- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, `/mgood:plan`, `/mgood:git-commit`, `/mgood:git-commit-push`, and `/mgood:git-commit-push-pr`. Do not shadow Pi built-ins.
+- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, `/mgood-pi:plan`, `/mgood:git-commit`, `/mgood:git-commit-push`, and `/mgood:git-commit-push-pr`. Do not shadow Pi built-ins.
 - Extension factories must not start timers, watchers, processes, or network connections. Start session-scoped resources in `session_start` or lazily; close them in an idempotent `session_shutdown` handler.
 
 ### Plugin Market contract

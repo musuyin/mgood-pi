@@ -2,8 +2,8 @@
 title: Work Memory & Task Recall
 state: parked
 created: 2026-09-21
-updated: 2026-09-21
-priority: after-plan-workflow-hardening
+updated: 2026-09-30
+priority: after-explicit-product-decisions
 ---
 
 # Work Memory & Task Recall
@@ -24,9 +24,9 @@ Build an opt-in long-term work memory and task-management capability for Pi. Aft
    - finishing tasks and suggested next action.
 5. Let the user inspect, edit, delete, clear, export, and disable stored memory.
 
-## Relationship to Plan Workflow
+## Relationship to Plan
 
-Plan Workflow remains the source of truth for planned feature requirements and executable task definitions. Work Memory should index/reference plan IDs, implementation versions, and task IDs rather than duplicate or silently rewrite them.
+The focused `/mgood-pi:plan` command creates an implementation document, not durable task state or stable IDs. Work Memory therefore must own any future task identifiers and lifecycle records explicitly rather than infer them from temporary plan files. It may cite a plan path as provenance, but must not silently rewrite the plan.
 
 Potential future commands:
 
@@ -63,23 +63,23 @@ A Skill or prompt template may help create summaries, but should not own storage
 
 - Does `hi` immediately display a recap, or offer a one-line “resume previous work?” action?
 - Is the default scope project, workspace, or user?
-- Which events create checkpoint proposals: explicit command, successful `/mgood:plan-do`, idle time, session shutdown, or Git commit?
-- How are manually created tasks reconciled with plan task IDs?
+- Which events create checkpoint proposals: explicit command, completed implementation turn, idle time, session shutdown, or Git commit?
+- How are manually created tasks reconciled with temporary plan checklist items?
 - What retention policy prevents stale tasks from becoming misleading?
 
 ## Promotion criteria
 
-Do not start implementation until Plan Workflow has:
+Do not start implementation until:
 
-- completed real interactive smoke tests for `/mgood:plan-make` and `/mgood:plan-do`;
-- stabilized its plan/task metadata contract;
-- produced at least one real feature plan and completed task with evidence;
-- documented observed friction that memory recall should solve.
+- `/mgood-pi:plan` has completed a real interactive smoke test;
+- the memory scope, task ownership, retention, and greeting UX questions above are resolved;
+- at least one real implementation session has documented recall friction this feature should solve;
+- storage and permission contracts are designed independently of temporary plan files.
 
 When ready, run:
 
 ```text
-/mgood:plan-make docs/backlog/work-memory-task-recall.md
+/mgood-pi:plan Design Work Memory using docs/backlog/work-memory-task-recall.md as context
 ```
 
 Use the backlog file as input, revalidate all assumptions against current Pi APIs, and create a fresh implementation plan rather than treating this note as executable.
