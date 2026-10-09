@@ -1,8 +1,8 @@
 # mgood-pi Plugin Kit — Agent Instructions
 
-> **Canonical contract:** Pi discovers this English `AGENTS.md` automatically. `AGENTS_CN.md` is its required Chinese synchronization. Do **not** create a competing `agent.md`, `CLAUDE.md`, or nested instruction file unless a package genuinely needs a narrower, documented override.
+> **Canonical contract:** Pi discovers this English `AGENTS.md` automatically. It is the sole repository instruction contract. Do **not** create a competing translation, `agent.md`, `CLAUDE.md`, or nested instruction file unless a package genuinely needs a narrower, documented override.
 >
-> **Synchronization rule:** Any change to this file must update `AGENTS_CN.md` in the same commit, with equivalent meaning. If translation is ambiguous, preserve the English rule and resolve the ambiguity before merging.
+> **Repository language rule:** All text written to or modified in repository files must be English, including source strings, documentation, package metadata, tests, prompts, comments, changelogs, and configuration values intended for people. This rule applies to file content only; it does not restrict the language of LLM responses.
 
 ## 1. Mission and boundaries
 
@@ -16,7 +16,7 @@ Build a composable, independently installable plugin kit that improves the **Pi 
 - MCP integration: connection lifecycle, tool/resource exposure, configuration UX, health checks, and permission boundaries.
 - Git workflow: worktree/session awareness, checkpoints, safe review/commit/restore flows, and repository status UI.
 - Durable project/user memory: explicit long-term notes, metadata storage, retrieval tools, optional local RAG indexing, import/export, and user control.
-- Reusable prompt workflows, including Plan Workflow's TUI-only `/mgood:plan` experience for local plan, implementation, and review actions.
+- Small, reusable agent-assisted commands, including the focused `/mgood-pi:plan` experience for clarifying a request and creating one implementation-ready local plan.
 
 ### Explicitly out of scope
 
@@ -62,25 +62,25 @@ This is a TypeScript npm-workspaces monorepo. Keep the current layout accurate i
 ```text
 .
 ├── AGENTS.md                         # canonical English agent contract
-├── AGENTS_CN.md                      # required synchronized Chinese contract
 ├── README.md                          # user-facing install and compatibility guide
 ├── package.json / package-lock.json   # private workspace root and lockfile
 ├── packages/
 │   ├── core/                          # shared framework-neutral contracts
-│   └── plan-workflow/                 # Schema v5 local PLAN/REVIEW discovery
+│   └── git/                           # configured-upstream Git safety core
 ├── plugins/
+│   ├── git/                           # one-command current-Agent Git actions
 │   ├── market/                        # /mgood:market and /mgood:init
-│   └── plan-workflow/                 # /mgood:plan; private bundled local-plan guidance
+│   └── plan/                          # /mgood-pi:plan; private bundled planning guidance
 ├── docs/
 │   ├── adr/                           # architecture decision records
 │   ├── features/                      # maintained implementation documentation
 │   └── releasing.md                   # independent npm release process
-├── tmp/work-plans/                    # user-managed local Schema v5 PLAN/REVIEW temporary data
+├── tmp/plans/                         # generated local Markdown implementation plans
 ├── .changeset/                        # independent package release intents
 └── .github/workflows/release.yml      # validation, Version Packages PR, publishing
 ```
 
-Plan Workflow discovers local workflow data only from `tmp/work-plans/`. Do not add a branded alias, configurable root, recursive search, or compatibility scan of repository-root `work-plans/`.
+Plan writes exactly one new Markdown file directly under `tmp/plans/` after clarification and repository investigation. Do not add discovery, execution, review, status, schema, compatibility aliases, or alternative roots.
 
 Add folders only when their first real package or documented responsibility exists. Future `packages/ui`, `packages/skillset`, `packages/mcp`, `packages/git`, `packages/memory`, matching plugins, `skills/`, `prompts/`, `themes/`, `services/`, `examples/`, and `scripts/` follow these same boundaries.
 
@@ -90,8 +90,10 @@ Add folders only when their first real package or documented responsibility exis
 - `plugins/*` are thin Pi adapters. Each owns one coherent user capability and exports an extension entrypoint from `src/index.ts`.
 - A plugin may depend on `packages/*`; packages must never depend on a plugin.
 - Avoid a god-plugin. Prefer independently installable feature packages and optional curated bundle/meta-packages.
+- Design plugins to be lightweight and easy to use. A plugin's normal, safe path should complete from one namespaced command; use the current Agent or bounded automation to handle workflow steps rather than requiring users to manually coordinate a multi-step process. Keep only confirmations that protect destructive, privileged, or external side effects.
+- Do not introduce a heavy project-management or planning system without an ADR that demonstrates why a small, one-command capability cannot meet the need.
 - Every distributable package needs an explicit `pi` manifest as applicable, license, supported Pi/Node versions, README, changelog, package file allowlist, and public npm metadata.
-- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, and `/mgood:plan`. Do not shadow Pi built-ins.
+- Use namespaced commands unless a short name is intentionally reserved. Current commands include `/mgood:init`, `/mgood:market`, `/mgood-pi:plan`, `/mgood:git-commit`, `/mgood:git-commit-push`, and `/mgood:git-commit-push-pr`. Do not shadow Pi built-ins.
 - Extension factories must not start timers, watchers, processes, or network connections. Start session-scoped resources in `session_start` or lazily; close them in an idempotent `session_shutdown` handler.
 
 ### Plugin Market contract
@@ -162,7 +164,7 @@ An architecture-affecting change includes: workspace/package boundaries; public 
 
 For each such change, update all applicable artifacts in the same change:
 
-1. `AGENTS.md` and `AGENTS_CN.md` for repository-wide rules, architecture, or workflow changes. They must stay semantically synchronized.
+1. `AGENTS.md` for repository-wide rules, architecture, workflow, language, or product-direction changes.
 2. `README.md` for user-facing capabilities, install commands, compatibility, layout, and security statements.
 3. The affected package README and `package.json` for install source, manifest, capabilities, configuration, permissions/data access, non-interactive behavior, failure/recovery, and uninstall/cleanup.
 4. `docs/features/<feature>/` for implemented feature architecture, operations, and package contracts.

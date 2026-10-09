@@ -188,6 +188,9 @@ describe("Git plugin", () => {
     expect(prompt).toContain("must automatically create and switch");
     expect(prompt).toContain("git switch -c <branch>");
     expect(prompt).toContain("before staging, committing, or pushing");
+    expect(prompt).toContain("inspect local branch naming conventions");
+    expect(prompt).toContain("<type>/<short-lowercase-kebab-case-summary>");
+    expect(prompt).toContain("verify the name is unused");
     expect(prompt).toContain("gh pr create");
     expect(prompt).toContain("Do not force push");
     expect(prompt).toContain("not a repository-wide stop");
@@ -227,6 +230,9 @@ describe("Git plugin", () => {
     expect(prompt).toContain("must automatically create and switch");
     expect(prompt).toContain("git switch -c <branch>");
     expect(prompt).toContain("before staging, committing, or pushing");
+    expect(prompt).toContain("inspect local branch naming conventions");
+    expect(prompt).toContain("<type>/<short-lowercase-kebab-case-summary>");
+    expect(prompt).toContain("verify the name is unused");
     expect(prompt).toContain("Do not force push");
     expect(prompt).toContain("not a repository-wide stop");
     expect(prompt).toContain("Commit every independently classifiable group");

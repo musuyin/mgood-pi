@@ -35,7 +35,7 @@ Potential future commands or Market views:
 /mgood:market
 /mgood:market status
 /mgood:market update
-/mgood:market update plan-workflow
+/mgood:market update plan
 ```
 
 The final command grammar must be validated against Pi's command parsing and must not shadow built-ins.
@@ -101,4 +101,4 @@ Do not implement until all of the following are true:
 - a precise upgrade/downgrade and pinned-version policy has been decided and documented;
 - the required settings read/write and package-update operations have tests for confirmation, cancellation, malformed settings, scope precedence, and command argument safety.
 
-When ready, create a fresh versioned implementation plan with `/mgood:plan-make`; revalidate Pi APIs and npm behavior instead of treating this note as executable.
+When ready, use `/mgood-pi:plan` with this backlog entry as context; revalidate Pi APIs and npm behavior instead of treating this note as executable.

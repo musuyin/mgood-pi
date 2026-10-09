@@ -1,23 +1,31 @@
-name: Release packages
+name: Stage packages for npm release
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type STAGE to stage unpublished versions already committed on main.
+        required: true
+        type: string
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: npm-stage-production
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Create release PR or publish packages
+  stage:
+    name: Stage packages for 2FA approval
+    if: github.ref == 'refs/heads/main' && inputs.confirmation == 'STAGE'
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: npm-production
+
     steps:
-      - name: Check out repository
+      - name: Check out main
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -25,23 +33,33 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.2
           cache: npm
           registry-url: https://registry.npmjs.org
+
+      - name: Install npm with staged publishing support
+        run: npm install --global npm@^12.2.0
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify release commit is on main
+        run: |
+          test "${GITHUB_SHA}" = "$(git rev-parse origin/main)"
+          test -z "$(git status --porcelain)"
+
       - name: Validate repository
         run: npm run check
 
-      - name: Create release pull request or publish changed packages
-        uses: changesets/action@v1
-        with:
-          version: npm run version-packages
-          publish: npm run release-packages
-          commit: "chore: version packages"
-          title: "chore: version packages"
+      - name: Verify package contents
+        run: npm pack --workspaces --dry-run
+
+      - name: Stage unpublished packages
+        run: npm run stage-release-packages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_STAGE_TOKEN }}
+
+      - name: Show staged packages awaiting 2FA approval
+        run: npm stage list
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_STAGE_TOKEN }}
