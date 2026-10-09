@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/plan",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "A focused Plan mode for Pi that clarifies requests and writes one local Markdown plan.",
   "type": "module",
   "license": "MIT",

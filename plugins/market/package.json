@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/plugin-market",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Pi extension providing the /mgood:market curated plugin installer and /mgood:init bootstrap preview.",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.84.2",
-    "@mgood-pi/core": "^0.1.0"
+    "@mgood-pi/core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

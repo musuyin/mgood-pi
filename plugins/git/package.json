@@ -1,6 +1,6 @@
 {
   "name": "@mgood-pi/plugin-git",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Pi extension that launches Agent-planned safe commit workflows and provides configured-upstream pushes.",
   "license": "MIT",
   "repository": "https://github.com/musuyin/mgood-pi.git",
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.84.2",
-    "@mgood-pi/git": "^0.1.0"
+    "@mgood-pi/git": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

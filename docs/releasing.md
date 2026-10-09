@@ -1,6 +1,6 @@
 # Independent package releases
 
-`mgood-pi` is one npm-workspaces repository, but every non-private workspace package has its own npm version, changelog entries, and release lifecycle. A plugin can therefore ship without releasing unrelated plugins.
+`mgood-pi` is one npm-workspaces repository, but every non-private workspace package has its own npm version, changelog entries, and release lifecycle. A plugin can therefore ship without releasing unrelated plugins. Changesets writes changelog entries from local Git history; preparing versions does not require a GitHub personal access token.
 
 ## Publishable packages
 
@@ -34,22 +34,15 @@ A package is publishable when its `package.json` is not `private`, includes publ
    npm run check
    ```
 
-Changesets updates internal dependency ranges after versions are calculated. Do not manually change package versions for ordinary feature work.
+Changesets updates internal dependency ranges after versions are calculated. Do not manually change package versions for ordinary feature work. The explicit first-stable release is the exception: its Changesets intentionally calculate 1.0.0 for every publishable workspace.
 
-## Automated release flow
+## CI validation
 
-The [release workflow](../.github/workflows/release.yml) runs on pushes to `main`:
+[CI](../.github/workflows/ci.yml) runs for pull requests, pushes to `main`, and manual validation. It installs the locked dependencies, runs `npm run check`, and performs `npm pack --workspaces --dry-run`. CI never publishes packages or changes versions.
 
-1. It validates the repository with `npm run check`.
-2. If pending changesets exist, it opens or updates a **Version Packages** pull request.
-3. The Version Packages PR runs `npm run version-packages`, which consumes changesets and updates package versions, dependency ranges, and changelogs.
-4. Merging that PR triggers the workflow again. With no pending changesets, it publishes only packages whose npm version is not already published.
+## Version preparation
 
-Repository maintainers must add an npm automation token as the `NPM_TOKEN` GitHub Actions secret. For scoped public packages, the npm organization/user must permit that token to publish under `@mgood-pi`.
-
-## Manual maintainer release
-
-Use this only when CI cannot be used. Work from a clean, up-to-date `main` branch:
+Publishing is a deliberate two-step process. First, prepare and review a version commit on a branch:
 
 ```bash
 npm ci
@@ -57,20 +50,82 @@ npm run check
 npm run version-packages
 git add .changeset package.json package-lock.json 'packages/*/package.json' 'plugins/*/package.json' 'packages/*/CHANGELOG.md' 'plugins/*/CHANGELOG.md'
 git commit -m "chore: version packages"
-npm run release-packages
+git push origin <version-branch>
 ```
 
-`npm run release-packages` delegates to Changesets, which publishes versioned packages in dependency order. Verify npm output and retry a dependent plugin only after its newly-versioned dependency is visible in the registry.
+Open a pull request for that commit, wait for CI, review the exact version, changelog, dependency-range, and lockfile changes, then merge it into `main`. `npm run version-packages` consumes the pending Changesets and updates versions and internal dependency ranges. Do not publish directly from an unmerged branch.
 
-## Preflight
+## Manual npm staging and 2FA promotion
 
-Before merging a Version Packages PR or publishing manually, run:
+[Stage packages for npm release](../.github/workflows/release.yml) is intentionally available only through **Run workflow** in GitHub Actions. Start it from `main`, type `STAGE` exactly, and approve the `npm-production` environment if it has required reviewers. The workflow checks out the current `main` head, installs locked dependencies, reruns repository and tarball validation, then stages every workspace version that is not already public.
+
+The workflow never runs `changeset version`, creates commits, opens pull requests, directly publishes packages, or accepts a release ref other than `main`. It uses `npm stage publish` with npm provenance, so staged versions are unavailable to package consumers until a 2FA-enabled maintainer explicitly approves them. The staging script checks each workspace version individually: re-running the workflow skips versions that npm already contains and does not attempt to stage unchanged public packages.
+
+### npm authentication
+
+Create a granular npm token with **Read and write (stage only)** access to the `@mgood-pi` organization and save it as the `NPM_STAGE_TOKEN` GitHub Actions repository secret. The workflow supplies it only as `NODE_AUTH_TOKEN`. Never put a token in a repository file, command history, issue, or pull-request comment.
+
+The workflow uses Node.js 22.22.2 and installs npm 12.2.0 or newer because staged publishing requires the `npm stage` command. npm Trusted Publishing is not used by this stage-only workflow. If the project later adopts npm Trusted Publishing for direct publishing, design and review a separate workflow rather than silently changing this 2FA release boundary.
+
+Before the first release, configure GitHub repository Settings → Environments → `npm-production` with at least one required reviewer. Restrict the workflow to maintainers with permission to run workflows.
+
+### Approve staged packages
+
+After the staging workflow succeeds, inspect exactly what is pending with the 2FA-enabled npm account:
 
 ```bash
-npm run check
-npm pack --workspace @mgood-pi/plugin-market --dry-run
-npm pack --workspace @mgood-pi/plan --dry-run
-npm pack --workspace @mgood-pi/plugin-git --dry-run
+npm login
+npm whoami
+npm install --global npm@^12.2.0
+npm stage list
 ```
+
+For every expected package, inspect its metadata and optionally download its tarball before approving it:
+
+```bash
+npm stage view <stage-id>
+npm stage download <stage-id>
+npm stage approve <stage-id>
+```
+
+`npm stage approve` prompts for your npm 2FA code and makes that one staged version public using the tag fixed at staging time (normally `latest`). Approve shared dependencies before dependent plugins. For this first release, use this order:
+
+```text
+@mgood-pi/core@1.0.0
+@mgood-pi/git@1.0.0
+@mgood-pi/plan@1.0.0
+@mgood-pi/plugin-market@1.0.0
+@mgood-pi/plugin-git@1.0.0
+```
+
+If a staged version is unexpected or fails inspection, do not approve it. Remove it with 2FA instead:
+
+```bash
+npm stage reject <stage-id>
+```
+
+Finally, verify the public registry:
+
+```bash
+npm view @mgood-pi/core version
+npm view @mgood-pi/git version
+npm view @mgood-pi/plan version
+npm view @mgood-pi/plugin-market version
+npm view @mgood-pi/plugin-git version
+```
+
+## Local maintainer fallback
+
+Use a local stage only if GitHub Actions is unavailable. Work from a clean, up-to-date `main` commit that already contains the reviewed version changes:
+
+```bash
+npm install --global npm@^12.2.0
+npm ci
+npm run check
+npm pack --workspaces --dry-run
+npm run stage-release-packages
+```
+
+Then inspect and promote the staged packages with the same `npm stage list`, `npm stage view`, and 2FA-protected `npm stage approve` sequence above.
 
 Never publish packages that contain local Pi sessions, credentials, project memory, generated `dist` directories, or test fixtures unrelated to package runtime behavior.
